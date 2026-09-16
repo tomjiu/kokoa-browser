@@ -16,7 +16,7 @@
 | Zen 模组商店地址 | 已修 404 -> 真实 CDN（77 个模组可用） |
 | 单测 | 10 个文件 / 197 用例全过；产物上重跑也全过 |
 
-# 二、★ 已完成但【尚未构建验证】的（9 个提交，构建 35093838416 在跑）
+# 二、★ 已完成但【尚未构建验证】的（构建 35096636452 在跑）
 
 ```
 de4a478（上次构建，上面那些）之后的 9 个提交：
@@ -32,12 +32,12 @@ de4a478（上次构建，上面那些）之后的 9 个提交：
   f61ed9e  去掉关于对话框字标 + 隐藏「更多来自 Mozilla」面板
 ```
 
-**构建 35093838416 已触发（基于 f61ed9e）**。出来后：
+**构建 35096636452 在跑（基于 d022d83 —— 修了 patch 格式问题后重排）**。出来后：
 
 ```bash
-gh run download 35093838416 --repo tomjiu/kokoa-browser --dir ./builds/35093838416
-python scripts/check-artifact.py ./builds/35093838416    # 预期全绿（含新增 pref 检查）
-bash scripts/verify-artifact-modules.sh ./builds/35093838416
+gh run download 35096636452 --repo tomjiu/kokoa-browser --dir ./builds/35096636452
+python scripts/check-artifact.py ./builds/35096636452    # 预期全绿（含新增 pref 检查）
+bash scripts/verify-artifact-modules.sh ./builds/35096636452
 ```
 
 # 三、★ 还没解决的（按重要性）
