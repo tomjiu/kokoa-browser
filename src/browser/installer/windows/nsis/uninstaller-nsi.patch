@@ -25,10 +25,9 @@ index becbb0f70c84eb7f2d9bff5a3aedcbb7a78a61cf..a23a8a1b160932368377fc841b501df9
  
    ${un.RegCleanFileHandler}  ".pdf"   "FirefoxPDF-$AppUserModelID"
  
-
 @@ -219,4 +219,6 @@ Function un.UninstallSurvey
    ; RPC_E_CANTCALLOUT_ININPUTSYNCCALL if we try. So all we can do is record
-   ; that we need to make the call later, which we will do from un.onGUIEnd.
+   ; that we need to make the call later, which we'll do from un.onGUIEnd.
 -  StrCpy $ShouldOpenSurvey "1"
 +  ; 【2026-09-16 修】默认不打开：Kokoa 没有卸载问卷，
 +  ; 打开一个无效 URL 只会让用户看到 Edge 报错。

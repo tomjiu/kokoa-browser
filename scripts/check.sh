@@ -359,6 +359,33 @@ check_patches() {
     fi
   done < <(git ls-files "src/**/*.patch" 2>/dev/null | sort -u)
   if [ $nlbad -eq 0 ]; then ok "所有 patch 文件都以换行结尾"; fi
+
+  # ── ★ 2026-09-16 加：hunk 头 @@ 【前面不能有空行】 ─────────────────
+  #
+  # 【为什么加】当天一次构建（35093838416）在 Import 步失败（只跑了 7 分钟）：
+  #     error: patch fragment without header at
+  #            .../aboutDialog-css.patch:20: @
+  # 而 hunk 行数【完全正确】、文件也【以换行结尾】—— 上面两道检查都放行了。
+  #
+  # 问题在【@@ 前面多了一个空行】：
+  #     @@ -19,3 +19,6 @@
+  #      #leftBox {
+  #     <这里多一个空行>
+  #     @@ -32,3 +35,6 @@        <- git 认为「新片段开始了但没有头」
+  #
+  # unified diff 里 hunk 之间必须【紧接】。空行会让 git 报
+  # patch fragment without header —— 而且报的行号指向 @@ 那一行，
+  # 看不出真正原因（空行在上一行）。
+  local blbad=0 f3
+  while IFS= read -r f3; do
+    [ -f "$f3" ] || continue
+    # NR>1：跳过文件首行，避免「文件以 @@ 开头」被误判
+    if awk 'NR>1 && prev=="" && /^@@/ {found=1} {prev=$0} END {exit !found}' "$f3"; then
+      blbad=$((blbad+1))
+      bad "$f3 hunk 头 @@ 前面有空行（git apply 会报 patch fragment without header）"
+    fi
+  done < <(git ls-files "src/**/*.patch" 2>/dev/null | sort -u)
+  if [ $blbad -eq 0 ]; then ok "所有 patch 的 hunk 头前面都没有多余空行"; fi
 }
 
 # ── ★ 2026-09-15 加：jar.mn 里注册的文件必须真实存在 ────────────────────

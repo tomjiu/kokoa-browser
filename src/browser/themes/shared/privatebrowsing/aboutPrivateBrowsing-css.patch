@@ -3,7 +3,7 @@ diff --git a/browser/themes/shared/privatebrowsing/aboutPrivateBrowsing.css b/br
 +++ b/browser/themes/shared/privatebrowsing/aboutPrivateBrowsing.css
 @@ -65,5 +65,8 @@
  .logo {
--  background: image-set(url("chrome://branding/content/about-logo-private.png"), url("chrome://branding/content/about-logo-private@2x.png") 2x) no-repeat
+-  background: image-set(url("chrome://branding/content/about-logo-private.png"), url("chrome://branding/content/about-logo-private@2x.png") 2x) no-repeat center
 +  /* 【2026-09-16 去掉 logo】用户要求「不要应用内部的 logo」。
 +     这是隐私浏览页的圆形 logo。
 +     置 none，但保留宽高（避免布局变化）。 */

@@ -45,7 +45,6 @@ index 94612d8e28af58fcb04914440348b899a0a1e08f..da3b1ffd09745d09589283356d1001db
  
    // Restore the cached Firefox Labs nav button visibility so it shows
    // immediately when recipes are expected to be available, before
-
 @@ -461,8 +461,12 @@
    moreFromMozilla: {
      l10nId: "more-from-moz-page-header",

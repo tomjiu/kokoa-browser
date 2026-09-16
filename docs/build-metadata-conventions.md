@@ -72,6 +72,58 @@ content/browser/preferences/widgets/update-state.mjs   (widgets/update-state/upd
 ② hunk 头的行数要与实际一致（old/new 两侧分别数）
 ③ hunk 里的【上下文行】必须能在【目标文件】里找到
 ④ 上下文要用【构建时】的版本 —— 即 Zen patch 应用【之后】的
+⑤ ★ hunk 头 @@ 【前面不能有空行】（空行会让 git 报 patch fragment without header）
+```
+
+## 2.4 ★ 五条规则各由什么保证（2026-09-16 补）
+
+| 规则 | 谁来保证 |
+|---|---|
+| ① 末尾换行 | `check.sh patches`（第 2 道检查） |
+| ② 行数自洽 | `check.sh patches`（第 1 道检查） |
+| ③ 上下文存在 | **`scripts/preflight-patches.py`**（真实 `git apply --check`） |
+| ④ 版本正确 | 同上（它会先比对 `index` 行的 blob 哈希） |
+| ⑤ 无空行 | `check.sh patches`（第 3 道检查，2026-09-16 加） |
+
+### preflight-patches.py 怎么做到「真预检」
+
+```
+patch 的 index 行带着原始文件的 blob 哈希：
+    index 017125bc2510e5f5e317a5e78c40d6aa9ded76ca..d343d8c6...
+
+所以脚本可以：
+  1. 从 GitHub 拉那个文件（按引擎版本对应 tag，如 FIREFOX_156_0_RELEASE）
+  2. 算它的 blob 哈希，与 index 的 pre-image 比
+  3. 一致 -> 拿到了【一模一样的原始文件】
+          -> 建临时 git 仓库，真跑 git apply --check（与 CI 同参数）
+
+哈希不一致时【跳过】而不是报失败（引擎版本可能略有差异，
+或目标文件先被别的 patch 改过）。跳过的会在输出里标明。
+```
+
+**用法**：
+
+```bash
+python scripts/preflight-patches.py                      # 全部
+python scripts/preflight-patches.py <patch> [<patch>...] # 指定
+```
+
+### 为什么需要 ③ 和 ⑤（两个真实事故）
+
+```
+事故 A（构建 34985728054）：patch 末尾缺换行
+    -> error: corrupt patch at ...:13
+    当天加了检查 ①。
+
+事故 B（构建 35093838416，只跑 7 分钟就挂）：@@ 前面多一个空行
+    -> error: patch fragment without header at ...:20: @
+    hunk 行数【完全正确】、文件【以换行结尾】—— ①② 都放行了。
+    当天加了检查 ⑤。
+
+同一次还发现：上下文里少写了几个字符（复制时被截断）
+    -> error: patch does not apply
+    这类只有【真预检】能抓（③）。
+    为此写了 scripts/preflight-patches.py。
 ```
 
 **关于 ④**（容易搞错）：
