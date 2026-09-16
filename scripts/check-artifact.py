@@ -49,9 +49,27 @@ for m in mods:
 ff = 'defaults/preferences/firefox.js'
 if ff in names:
     t = z.read(ff).decode('utf-8','replace')
-    # 收两个前缀：kokoa.menu.*（菜单）与 browser.shell.*（首次运行/默认浏览器）
+    # 收这些前缀的 pref：
+    #   kokoa.menu.*                                    菜单可见性
+    #   browser.shell.*                                 首次运行 / 默认浏览器 / 任务栏
+    #   app.update.*                                    更新检查
+    #   browser.newtabpage...asrouter.userprefs.*       「推荐消息」总开关
+    #
+    # 【★ 2026-09-16 修】原来只收了前两个 —— 于是 app.update.* 与
+    #   cfr.* 明明在产物里，却被判成「缺」（检查脚本自己的 bug，
+    #   差点让我以为构建没生效）。
+    #
+    # 【同名多次定义取哪一个】同一个 pref 可能出现多次（Firefox 的定义
+    #   在前，我们的在 zen.js 里、以 #include 追加在末尾）。
+    #   Firefox 后定义覆盖前定义 -> 所以这里【取最后一次】。
+    #   dict 赋值天然如此。
     prefs = {}
-    for _m in re.finditer(r'pref\(\s*"((?:kokoa\.menu|browser\.shell)\.[^"]+)"\s*,\s*([^)]{0,24})\)', t):
+    for _m in re.finditer(
+        r'pref\(\s*"((?:kokoa\.menu|browser\.shell|app\.update|'
+        r'browser\.newtabpage\.activity-stream\.asrouter\.userprefs)\.[^"]+)"'
+        r'\s*,\s*([^)]{0,24})\)',
+        t,
+    ):
         prefs[_m.group(1)] = _m.group(2).strip()
     expect = {
         'kokoa.menu.new-tab.visible': 'true',
