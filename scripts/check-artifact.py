@@ -73,19 +73,19 @@ if ff in names:
         'kokoa.menu.print.visible': 'false',
         'kokoa.menu.fxa.visible': 'false',
         'kokoa.menu.save-file.visible': 'false',
-        # 【2026-09-16】首次运行 / 默认浏览器 / 任务栏（用户要求不弹）
+        # 【2026-09-16 重写】★ 初始设置页（欢迎页）—— 这次新加的，也是关键
+        # 那个页面本身就带「设为默认 + 固定任务栏」的步骤，
+        # 所以「通知又出现」和「初始设置页又出现」是同一个原因。
+        'zen.welcome-screen.seen': 'true',
+        'browser.aboutwelcome.enabled': 'false',
+        # 首次运行 / 默认浏览器（读它的：AboutWelcomeDefaults / OnboardingMessageProvider）
         'browser.shell.checkDefaultBrowser': 'false',
-        'browser.shell.setDefaultBrowserUserChoice': 'false',
-        'browser.shell.setDefaultGuidanceNotifications': 'false',
-        'browser.shell.skipDefaultBrowserCheckOnFirstRun': 'true',
-        'browser.shell.pinToTaskbar': 'false',
-        # 【2026-09-16】还没做发布流水线，「检查更新」会报错，先关掉
-        'app.update.enabled': 'false',
-        'app.update.auto': 'false',
-        # 【2026-09-16】★ 关掉「设为默认浏览器 / 固定任务栏」弹窗的总开关
+        # ★「推荐消息」总开关 —— 关「设为默认 / 固定任务栏」那条 infobar
         # （checkDefaultBrowser 只是必要条件之一；这条才是彻底的）
         'browser.newtabpage.activity-stream.asrouter.userprefs.cfr.features': 'false',
         'browser.newtabpage.activity-stream.asrouter.userprefs.cfr.addons': 'false',
+        # 更新检查（Kokoa 还没发布流水线）
+        'app.update.auto': 'false',
     }
     for k, v in expect.items():
         got = prefs.get(k)

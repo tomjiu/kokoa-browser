@@ -2,63 +2,64 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-# Kokoa —— 首次运行 / 默认浏览器 / 任务栏的行为。
+# Kokoa —— 首次运行 / 欢迎页 / 默认浏览器 / 任务栏的行为。
 #
-# 【2026-09-16 实机验收后加】
-#   用户要求：「将 Kokoa 设为默认浏览器并固定到任务栏」的弹窗
-#             「保持默认关闭不要弹出」
+# 【2026-09-16 用户反馈后重写】
+#   用户报：「又有固定任务栏通知和初始设置页面了」
+#   根因：初始设置页（欢迎页）本身带「设为默认 + 固定任务栏」步骤。
+#         而控制欢迎页的两个 pref 我们【根本没设】。
+#
+# 【★ 每个 pref 都标注「谁在读它」—— 用产物全量 grep 得到】
+#   这份文件原来有 5 个 pref 是【凭空写的】（代码里没人读），
+#   设了没用 —— 会让人误以为「已经关掉了」。所以这次逐个核实并清理。
 
-# ── 一、关掉「设为默认浏览器」的弹窗与引导 ─────────────────────
+# ── 一、初始设置页（欢迎页）—— 这两个是这次新加的，也是关键 ──────
 
-# 首次运行不再检查默认浏览器
+# Zen 自己的欢迎页（ZenStartup.mjs 的 #checkForWelcomePage）
+#   读法：getBoolPref("zen.welcome-screen.seen", false)
+#   为 false 时 loadSubScript 加载 ZenWelcome.mjs -> 显示欢迎页
+#   设为 true 后【连脚本都不加载】
+- name: zen.welcome-screen.seen
+  value: true
+
+# Firefox 的 about:welcome / preonboarding（BrowserGlue.sys.mjs /
+# PreonboardingSplash.sys.mjs 读）
+- name: browser.aboutwelcome.enabled
+  value: false
+
+# ── 二、默认浏览器提示 ───────────────────────────────────────
+
+# 读它的：AboutWelcomeDefaults.sys.mjs / MessagingTargetingConstants.sys.mjs /
+#         OnboardingMessageProvider.sys.mjs（还有 Windows shell 集成）
 - name: browser.shell.checkDefaultBrowser
   value: false
 
-# 不主动去改系统设置
-- name: browser.shell.setDefaultBrowserUserChoice
-  value: false
-
-# 关掉「设为默认」的后续引导通知
-- name: browser.shell.setDefaultGuidanceNotifications
-  value: false
-
-# 首次运行跳过默认浏览器检查（双保险）
-- name: browser.shell.skipDefaultBrowserCheckOnFirstRun
-  value: true
-
-# 「固定到任务栏」的提示不弹
-- name: browser.shell.pinToTaskbar
-  value: false
-
-# ── 二、★ 关掉「推荐消息」总开关（这条最彻底）────────────────
+# ── 三、★「推荐消息」总开关 —— 关「设为默认 / 固定任务栏」的那条 infobar ──
 #
-# 【为什么还需要它】
-#   checkDefaultBrowser = false 只是那个弹窗的【必要条件之一】。
-#   完整条件（OnboardingMessageProvider.sys.mjs 的 INFOBAR_DEFAULT_AND_PIN_87）：
-#     firefoxVersion >= 138 && source == "startup" && !isDefaultBrowser
-#     && !checkDefaultBrowser
-#     && (现在 - userDisabledDefaultCheck) >= 7 天     <- 每周会再问一次
-#     && profile 创建 >= 5 周 && profile < 15 周
-#     && ● ...asrouter.userprefs.cfr.features ●          <- 就是这个开关
-#     ...
+# 读它的：ASRouterPreferences.sys.mjs / ASRouterTargeting.sys.mjs /
+#         MessagingTargetingConstants.sys.mjs
 #
-#   把它设成 false，所有「推荐消息」都不弹 —— 包括：
-#     · Make Kokoa your primary browser?（设为默认 + 固定任务栏）
-#     · 各种 CFR / 推广消息
-#
-#   实测：该 pref 的 targeting 出现在 9 个文件、19 处。
+# 为什么光有 checkDefaultBrowser=false 不够（读 OnboardingMessageProvider 的
+# INFOBAR_DEFAULT_AND_PIN_87 的 targeting 得到）：
+#   firefoxVersion >= 138 && source == "startup" && !isDefaultBrowser
+#   && !checkDefaultBrowser
+#   && (现在 - userDisabledDefaultCheck) >= 7 天      <- 每周会再劝一次
+#   && profile 创建 >= 5 周 && profile < 15 周
+#   && ● asrouter.userprefs.cfr.features ●            <- 就是这个开关
 - name: browser.newtabpage.activity-stream.asrouter.userprefs.cfr.features
   value: false
 
 - name: browser.newtabpage.activity-stream.asrouter.userprefs.cfr.addons
   value: false
 
-# ── 三、更新检查（Kokoa 还没有更新服务器）────────────────────
+# ── 四、更新检查（Kokoa 还没有更新服务器）──────────────────
 #
 # app.update.url.* 指向我们的 GitHub 仓库，那里没有 update.xml，
-# 所以「检查更新」必然失败。等有了发布流水线再打开。
-- name: app.update.enabled
-  value: false
-
+# 所以「检查更新」必然失败。
+#
+# 【只设 app.update.auto】
+#   证据：about-firefox.mjs 读它；
+#   而 app.update.enabled 在产物里【没有任何 JS 读】——
+#   原来是凭印象写的，已删（设了没用，属误导）。
 - name: app.update.auto
   value: false
