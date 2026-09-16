@@ -49,27 +49,23 @@ for m in mods:
 ff = 'defaults/preferences/firefox.js'
 if ff in names:
     t = z.read(ff).decode('utf-8','replace')
-    # 收这些前缀的 pref：
-    #   kokoa.menu.*                                    菜单可见性
-    #   browser.shell.*                                 首次运行 / 默认浏览器 / 任务栏
-    #   app.update.*                                    更新检查
-    #   browser.newtabpage...asrouter.userprefs.*       「推荐消息」总开关
+    # 收【全部】pref("k", v)，后行覆盖前行 —— 与 Firefox pref 引擎语义一致。
     #
-    # 【★ 2026-09-16 修】原来只收了前两个 —— 于是 app.update.* 与
-    #   cfr.* 明明在产物里，却被判成「缺」（检查脚本自己的 bug，
-    #   差点让我以为构建没生效）。
+    # 【★ 这条正则改过两轮，两次都踩了同一个坑】
+    #   第一版只收 kokoa.menu|browser.shell 两个前缀。
+    #   后来往 expect 里加了 app.update.* / asrouter.userprefs.* 之后，
+    #   忘了扩正则 —— 于是【明明在产物里】的 4 个 pref 被判成「缺」，
+    #   两次核对都出现 4 项假 FAIL（构建 35096636452 / 35113050289），
+    #   差点让人以为构建没生效。
     #
-    # 【同名多次定义取哪一个】同一个 pref 可能出现多次（Firefox 的定义
-    #   在前，我们的在 zen.js 里、以 #include 追加在末尾）。
-    #   Firefox 后定义覆盖前定义 -> 所以这里【取最后一次】。
-    #   dict 赋值天然如此。
+    #   所以现在【收全部 pref】，不再维护前缀白名单：
+    #   以后往 expect 里加任何 pref 都不用动这里。
+    #
+    # 【同名多次定义取哪一个】同一个 pref 可能出现多次（Firefox 的定义在前，
+    #   我们的在 zen.js 里、以 #include 追加在末尾）。Firefox 后定义覆盖前定义
+    #   -> 所以【取最后一次】。dict 赋值天然如此。
     prefs = {}
-    for _m in re.finditer(
-        r'pref\(\s*"((?:kokoa\.menu|browser\.shell|app\.update|'
-        r'browser\.newtabpage\.activity-stream\.asrouter\.userprefs)\.[^"]+)"'
-        r'\s*,\s*([^)]{0,24})\)',
-        t,
-    ):
+    for _m in re.finditer(r'pref\(\s*"([^"]+)"\s*,\s*([^)]{0,24})\)', t):
         prefs[_m.group(1)] = _m.group(2).strip()
     expect = {
         'kokoa.menu.new-tab.visible': 'true',
@@ -135,6 +131,32 @@ if asx:
     m = re.search(r'"hideLogo",\s*\{[^}]*value:\s*(true|false)', t)
     v = m.group(1) if m else '?'
     chk('新标签页 hideLogo = true', v == 'true', '实际 ' + v)
+
+# 6. AI 侧栏（kokoa-ai-sidebar，TASK-04 MVP）
+#    CSS/文案走 jar.mn 直接进包；DOM 骨架经 browser-box.inc.xhtml
+#    预处理展开进 browser.xhtml（include 在 html:sidebar-main 内）。
+css_hit = [n for n in names if n.endswith('zen-styles/kokoa-ai-sidebar.css')]
+chk('AI 侧栏 css 进包', css_hit, css_hit[0] if css_hit else '缺 zen-styles/kokoa-ai-sidebar.css')
+
+ftl_hit = [n for n in names if 'kokoa-ai-sidebar.ftl' in n]
+chk('AI 侧栏文案进包', ftl_hit, ftl_hit[0] if ftl_hit else '缺 kokoa-ai-sidebar.ftl')
+
+bx = [n for n in names if n.endswith('browser.xhtml')]
+if bx:
+    t = z.read(bx[0]).decode('utf-8','replace')
+    has_ours = 'kokoa-ai-sidebar' in t
+    has_zen = 'zen-appcontent-wrapper' in t
+    if has_ours:
+        chk('AI 侧栏挂载进 browser.xhtml（在 sidebar-main 内展开）', True,
+            'zen 标记' + ('同在' if has_zen else '异常缺失'))
+    elif has_zen:
+        chk('AI 侧栏挂载进 browser.xhtml（在 sidebar-main 内展开）', False,
+            'browser.xhtml 有 zen 标记但无 kokoa-ai-sidebar —— include 未生效')
+    else:
+        chk('AI 侧栏挂载进 browser.xhtml（在 sidebar-main 内展开）', False,
+            'browser.xhtml 连 zen-appcontent-wrapper 都没有 —— 形态与预期不符，先查这个')
+else:
+    chk('AI 侧栏挂载进 browser.xhtml（在 sidebar-main 内展开）', False, '产物里没有 browser.xhtml')
 
 # 输出
 npass = sum(1 for r in results if r[0])

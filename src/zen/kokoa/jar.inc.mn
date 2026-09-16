@@ -1,0 +1,8 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+# 注意：纯 CSS 条目【不要】加 * 前缀 —— * 会让 jar_maker 用 % 标记跑
+# preprocessor，文件里没有 % 指令会直接报 'no preprocessor directives found'
+# （构建 35099174413 踩的坑）。需要 %include 等预处理时才加 *。
+        content/browser/zen-styles/kokoa-ai-sidebar.css                  (../../zen/kokoa/kokoa-ai-sidebar.css)

@@ -1,0 +1,28 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+ * Kokoa AI 工作区侧栏（MVP 第 1 步：最小可见）。
+ * 规则（docs/workitem-ai-workspace-sidebar.md 第五节）：
+ *   不用 !important —— 如果不重叠需要 !important，说明 include 位置选错了，
+ *   应该挪容器，而不是加样式去压（ADR-017：拥有结构 vs 对抗结构）。
+ */
+
+/* 侧栏本体：与 #vertical-tabs 并列，自然参与 sidebar-main 的布局。
+   定宽 + flex-shrink:0，让标签条保持原宽度（我们不挤它）。 */
+#kokoa-ai-sidebar {
+  width: 240px;
+  min-width: 240px;
+  flex-shrink: 0;
+  background: var(--zen-color-scheme-primary, rgba(30, 30, 34, 0.9));
+  border-inline-start: 1px solid rgba(128, 128, 128, 0.25);
+  padding: 8px;
+  overflow: hidden;
+}
+
+/* MVP 阶段只有一行标题，用系统现有文案色，不造新变量 */
+#kokoa-ai-sidebar .kokoa-ai-sidebar-title {
+  font-size: 1.1em;
+  font-weight: 600;
+  color: inherit;
+}

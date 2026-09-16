@@ -1,0 +1,13 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+<!-- Kokoa AI 工作区侧栏（MVP 第 1 步：最小可见）
+     挂载位置：browser-box.inc.xhtml 的 html:sidebar-main 内，与 #vertical-tabs 并列。
+     设计依据：docs/workitem-ai-workspace-sidebar.md 第二节 ——
+     必须放在 #sidebar-container 内部（跟标签条同容器），
+     不能套在容器外，否则会继承标签条的折叠行为。
+     判据：如果它需要 !important 才能不重叠，说明位置错了（ADR-017）。 -->
+<vbox id="kokoa-ai-sidebar" class="kokoa-ai-sidebar">
+  <label id="kokoa-ai-sidebar-title" class="kokoa-ai-sidebar-title" data-l10n-id="kokoa-ai-sidebar-title"/>
+</vbox>

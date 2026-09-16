@@ -129,3 +129,58 @@ TASK-04 给了一条可执行的判据，我认为这是整份文档最有价值
 ❓ 侧栏折叠/展开的完整状态机（只读了宽度常量与 compact-mode 入口）
 ❓ 【如果侧栏宽度需要用户可调】状态存哪（kDefaultSidebarWidth 只是默认值）
 ```
+
+---
+
+# 九、落地记录：MVP 第 1 步（2026-09-16 云端）
+
+## 交付物
+
+| 文件 | 类型 | 说明 |
+|---|---|---|
+| `src/browser/base/content/kokoa-ai-sidebar.inc.xhtml` | 新增 | DOM 骨架：`<vbox id="kokoa-ai-sidebar">` + 一行 `data-l10n-id` 标题 |
+| `src/zen/kokoa/kokoa-ai-sidebar.css` | 新增 | 240px 定宽 + flex-shrink:0 + 边框，**零 !important** |
+| `src/zen/kokoa/jar.inc.mn` | 新增 | CSS 映射为 `chrome://browser/content/zen-styles/kokoa-ai-sidebar.css` |
+| `locales/{en-US,zh-CN}/browser/browser/kokoa-ai-sidebar.ftl` | 新增 | `kokoa-ai-sidebar-title`（两语言，check.sh l10n 校验一致性） |
+| `src/browser/base/content/browser-box-inc-xhtml.patch` | 手改 | 在 `html:sidebar-main` 内、`#vertical-tabs` 之后插 1 行 `#include`；hunk 头 new-count 22→23 |
+| `src/browser/base/content/zen-assets.jar.inc.mn` | 改 | include kokoa 的 jar.inc.mn |
+| `src/browser/base/content/zen-assets.inc.xhtml` | 改 | `<link>` 挂 CSS |
+| `src/browser/base/content/zen-locales.inc.xhtml` | 改 | 挂 ftl |
+
+## patch 手改的安全性论证（为什么这次敢手写）
+
+「不要手写 patch」的原始风险 = **上下文对不上 / index hash 错**。逐条排除：
+
+1. 读 surfer 源码（zen-browser/surfer `src/commands/patches/git-patch.ts`）：
+   实际调用是 `git apply --ignore-space-change --ignore-whitespace --verbose`，
+   **非 --3way、不带 --index** → index/hash 行被完全忽略；
+2. 本次改动 = 在既有 hunk 内部插 1 条纯新增 `+` 行，**不碰任何上下文行与旧侧行号**，
+   仅 hunk 头 new-count 22→23（check.sh patches 的 awk 校验兜底行数）；
+3. 实测：取 Firefox 155.0.1（FIREFOX_155_0_1_RELEASE）原版 browser-box.inc.xhtml，
+   在临时 git 仓库用 surfer 同参数 apply —— **cleanly applied**，
+   include 落在第 13 行（sidebar-main 内，与 TASK-04 第二节要求一致）。
+
+## 产物层验证（不用实机）
+
+check-artifact.py 新增 3 项（当前全套 31 项）：
+- AI 侧栏 css 进包（jar.mn 直打包）
+- AI 侧栏文案进包（ftl）
+- AI 侧栏挂载进 browser.xhtml（include 经预处理展开；用 zen-appcontent-wrapper 做
+  「形态 sanity」—— 若连 Zen 标记都查不到，先怀疑检查自身假设）
+
+分支行为已用假 omni.ja 双向验证：无侧栏恰 3 FAIL（含「include 未生效」文案）、有侧栏全 OK。
+
+## 待实机（只有人能做）
+
+```
+· 开启 Zen 侧栏（垂直标签条可见）→ 标签条右侧应出现「AI 工作区」窄栏（240px）
+· 判据：不需要 !important 也不与标签条/网页区重叠
+· 若重叠 → 位置错了，回本文档第二节重选容器（不要加样式去压）
+· 侧栏收起时我们的窄栏应跟着容器一起隐藏（预期行为：与标签条同显隐）
+```
+
+## 下一步（MVP 第 2/3 步，等第 1 步实机确认后）
+
+- 第 2 步：自定义元素 + 接 `KokoaDshSessions`（已在 main，49 用例），
+  `ZenPreloadedScripts.js` 加装载行
+- 第 3 步：会话列表 UI（session/list → 列表渲染；dsh 内切换，外壳不遥控 —— 已证边界）

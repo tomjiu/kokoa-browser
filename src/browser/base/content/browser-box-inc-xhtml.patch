@@ -2,7 +2,7 @@ diff --git a/browser/base/content/browser-box.inc.xhtml b/browser/base/content/b
 index cf35762fdcc4716932c7af7cf4af4b2f72aea038..6c13e42806ce80accce464d7ec7e022a0d8e0078 100644
 --- a/browser/base/content/browser-box.inc.xhtml
 +++ b/browser/base/content/browser-box.inc.xhtml
-@@ -3,12 +3,22 @@
+@@ -3,12 +3,23 @@
  # file, You can obtain one at http://mozilla.org/MPL/2.0/.
  
  <hbox flex="1" id="browser">
@@ -13,6 +13,7 @@ index cf35762fdcc4716932c7af7cf4af4b2f72aea038..6c13e42806ce80accce464d7ec7e022a
    <box context="sidebar-context-menu" id="sidebar-container" class="chrome-block" hidden="true">
      <html:sidebar-main flex="1">
        <box id="vertical-tabs" slot="tabstrip" customizable="true" contextmenu="toolbar-context-menu"></box>
++#include kokoa-ai-sidebar.inc.xhtml
      </html:sidebar-main>
    </box>
    <splitter id="sidebar-launcher-splitter" class="chromeclass-extrachrome sidebar-splitter" resizebefore="sibling" resizeafter="none" hidden="true"/>

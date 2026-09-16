@@ -1,96 +1,94 @@
-# 距「初步完成」还差多少（2026-09-16 晚 收尾盘点）
+# 距「初步完成」还差多少（2026-09-16 盘点）
 
-> 这份是【重新核对过源码与产物】的现状。上一版（等 35056127083）已过期。
+> 之前几份文档的「待办」散落各处、部分已过期。
+> 这一份是【重新核对过源码与产物】的现状。
 
 ---
 
-# 一、已完成且有产物证据（构建 35056127083 = de4a478）
+# 一、已经完成的（有证据）
 
 | 项 | 证据 |
 |---|---|
 | 品牌名 = Kokoa | 产物 brand.ftl：5 项全是 Kokoa |
-| 5 个 AI 模块进包 | 产物 `modules/zen/Kokoa*.mjs` |
+| 5 个 AI 模块进包 | 产物 `modules/zen/Kokoa*.mjs`（35056127083 核对，含新增 KokoaMenubar） |
 | 关于对话框无 Zen 残留 | 产物 aboutDialog.xhtml 里 zen 出现 **0** 次 |
-| 欢迎页大标题已删 | 产物确认 |
-| 菜单可配置（3 项默认隐藏） | 产物 firefox.js 里 5 条 kokoa.menu.* 默认值 |
-| Zen 模组商店地址 | 已修 404 -> 真实 CDN（77 个模组可用） |
-| 单测 | 10 个文件 / 197 用例全过；产物上重跑也全过 |
+| 设置页 Kokoa 分类 | 产物 41 个 ftl + kokoa-settings.js |
+| AI 面板 / 分屏 / 会话绑定 | 源码已实现 |
+| 菜单可配置（默认隐藏 3 项） | 35056127083 产物：5 条 kokoa.menu.* pref 默认值内联进 firefox.js |
+| 欢迎页大标题 / 新标签页 logo | 35047911545 + 35056127083 均确认 |
+| 148 个单测 | 9 个测试文件全过；对 35056127083 产物里的模块跑也是 148/148 |
 
-# 二、★ 已构建验证通过（构建 35096636452 = d022d83，success）
+# 二、★ 还差什么才算「初步完成」（2026-09-16 更新）
 
-```
-de4a478（上次构建，上面那些）之后的 9 个提交：
+> 上一版写的是「等构建 35056127083」。
+> **那次已完成**（success，产物核对 17/17 + 产物单测 148/148 全绿），所以这一节重写。
 
-  c5ec6bb  Merge PR#2: dsh 会话列表客户端
-  b0962e7  菜单隐藏【实机不生效】的真正修复（template 里，不在 document）
-  dfe54e1  启动跳 GitHub / 默认浏览器弹窗 / 检查脚本
-  bddb94a  「检查更新失败」-> 关掉 app.update.*
-  8f63df8  贴牌 URL 全局替换的 3 处错误（模组 404 / 捐赠 / 卸载问卷）
-  a4d5333  去掉新标签页徽标 + 设置页分类图标
-  cbda640  去掉关于对话框 logo + 隐私浏览页 logo/字标
-  f71e4ed  彻底关掉「设为默认 + 固定任务栏」弹窗（cfr.features 总开关）
-  f61ed9e  去掉关于对话框字标 + 隐藏「更多来自 Mozilla」面板
-```
+## 2.1 ⏳ 唯一的阻塞项:实机点一遍（构建已验证完）
 
-**构建 35096636452 在跑（基于 d022d83 —— 修了 patch 格式问题后重排）**。出来后：
+**构建 35056127083 已完成（success，2026-09-16）**，产物核对全绿：
 
 ```bash
-gh run download 35096636452 --repo tomjiu/kokoa-browser --dir ./builds/35096636452
-python scripts/check-artifact.py ./builds/35096636452    # 预期全绿（含新增 pref 检查）
-bash scripts/verify-artifact-modules.sh ./builds/35096636452
+# 1) 不用实机就能查的（17 项）—— 已做，17/17 全绿
+python scripts/check-artifact.py <产物目录>
+#    模块进包 5 个 + kokoa.menu.* pref 5 个 + 品牌名 5 项
+#    + 欢迎页已删 + hideLogo=true
+
+# 2) 对着产物跑单测（验证打包没改变行为）—— 已做，148/148 全过
+bash scripts/verify-artifact-modules.sh <产物目录>
 ```
 
-# 三、★ 还没解决的（按重要性）
+详见 `docs/build-35056127083-verified.md`。
 
-## 3.1 设置页「Kokoa」分类：进去只有搜索框 + 点它闪回默认页
-
-**这是个真功能问题**（AI 设置页打不开），一直没定位。
-
-已排除的（逐环核对过，每一环都对）：
+**剩下【只有人能做】的部分**，照 `docs/manual-test-checklist.md` 实机点一遍:
 ```
-✅ 导航按钮存在（view="paneKokoa"）
-✅ preferences.js 里 register_module 有
-✅ 模板展开条件加了 paneKokoa
-✅ kokoa-settings.js 里 gKokoaSettings 有定义
-✅ 脚本顺序（DOMContentLoaded 后才 init）
-✅ 名称转换守恒（paneKokoa -> kokoa -> paneKokoa）
+· 点「AI 工作区」-> dsh 起来 -> 面板打开（带 token）
+· 再点一次 -> 复用标签，不再新开
+· 点「与网页并排」-> 左右分屏
+· 设置 -> Kokoa -> 菜单:勾选能改
+· 三条杠菜单:打印/登录/保存页面 默认【不在】
+· Ctrl+P 仍能打印（隐藏的是入口，不是能力）
 ```
 
-**下一步需要【运行时日志】**：
-```bash
-kokoa.exe -jsconsole -no-remote -profile <profile>
-# 然后：设置 -> 点那个空白项 -> 看控制台红色错误
-```
-（试过 MOZ_LOG，日志为空；也试过临时改 omni.ja 注入诊断代码 —— 脚本似乎没执行，
- 但那个结论受「注入方式」影响，不够确凿。）
+**这一步之前，AI 工作区不能算「验证可用」** —— 单测覆盖了逻辑，
+但没覆盖「dsh 能否真被拉起」和「UI 真的长什么样」。
 
-## 3.2 少数位置的品牌 logo（用户可见性低）
+## 2.2 已完成（有证据）
 
-| 位置 | 状态 |
+| 项 | 证据 |
 |---|---|
-| customkeys 侧栏顶部 logo | 该文件【不在我们树里】（来自上游），要改得新建 patch |
-| profile-selector 窗口 logo | 只在多 profile 时出现 |
-| QRCodeWorker 里的 logo | 「下载移动版」二维码，可整块去掉 |
-| aboutwelcome.bundle.js | Firefox 欢迎页组件，Zen 不用 -> 用户看不到 |
-| OnboardingMessageProvider / PanelTestProvider | 内部/测试用 |
+| 品牌名 = Kokoa | 产物 brand.ftl 五项全对 |
+| 6 个模块进包 | 35032271818 / 35047911545 / 35056127083 / 35069527609 均确认（最新含 KokoaDshSessions） |
+| 关于对话框无 Zen 残留 | 产物里 zen 出现 0 次 |
+| 欢迎页大标题已删 | 35047911545 / 35056127083 均确认 |
+| 新标签页 hideLogo | 35047911545 / 35056127083 均确认 = true |
+| 菜单可配置 | 35056127083 确认：pref 默认值进包 + 产物模块 25 用例过；实机验收已过（b0962e7 修了菜单在 template 里的坑） |
+| dsh 接口三未知 | 已关闭（docs/dsh-0.1.5-interface.md + workitem-ai-panel-interface 第五节） |
+| 实机验收第一轮 | 完成（启动跳 GitHub / 默认浏览器弹窗 / 更新检查均已修，见 dfe54e1 等 8 提交） |
+| 单测 | 197 个用例 / 10 个文件全过；产物上重跑 197/197（构建 35069527609，check-artifact 18/18） |
 
-## 3.3 其他（不阻塞）
+# 三、之后再说（不阻塞）
 
-```
-· AI 工作区侧栏         未实现（是增强：现在「标签页+分屏」已能用）
-· dsh 会话切换          接口没查清；代码【故意只记录状态】
-· branding 应用图标     还是 Zen/Firefox 的图（surfer 要求文件必须存在）
-· release 流水线的 zen-browser/* 引用
-```
+| 项 | 说明 |
+|---|---|
+| AI 工作区侧栏第 2/3 步 | **第 1 步（最小可见）已落地并过产物验证**（35113050289：侧栏 css/ftl 进包 + 挂载进 browser.xhtml，31/31）；待实机确认 include 位置后接 KokoaDshSessions（49 用例）做会话列表 UI |
+| branding 图标 | 现在还是 Zen/Firefox 图标（应用内 logo 清理已做一批：a4d5333 / cbda640 / f61ed9e） |
+| dsh 会话切换 | **已查清：做不到**。当前会话是 dsh 页面本地状态，无 URL 路由、无外部触发通道（dsh-0.1.5-interface.md）；产品形态改为【列表展示 + 引导用户在 dsh 内切换】，强需则向 dsh 上游提 deep-link |
+| release 流水线的 zen-browser/* 引用 | 真做发布时才需要 |
 
 # 四、一句话
 
-**代码层：品牌清理 + AI 工作区已基本做完，等 35093838416 验证。**
-**唯一的功能缺口：设置页 Kokoa 分类打不开（需要一次带控制台的实机排查）。**
+**AI 工作区主线：代码层验证全部闭环（35056127083 = 17/17+148/148；35069527609 = 18/18+197/197；35113050289 = 31/31+202/202 含侧栏），实机验收第一轮已完成；侧栏 MVP 第 1 步已过产物验证，待实机看位置。**
+侧栏位置确认后接会话列表，主线就算初步完成。
 
-# 五、分类原则（用户明确过）
+# 五、★ 基线升级遗留：156.0 patch 债（PR #3 已清）
 
-```
-去掉：品牌标识（Zen 橙色圆、Firefox 字标、应用内推广）
-保留：功能图标（隐私浏览标识、文件类型图标、Windows 磁贴、安装向导水印）
-```
+surfer.json candidate=156.0 生效后 CI 基线已升级 Firefox 156.0，但一批 155 时代
+手写的 patch（空行分隔 hunk + 行号乱序 + 上下文漂移）从未在 156 上验证过，
+在 PR #3 的构建里逐个引爆（aboutDialog / preferences-js / uninstaller-nsi /
+aboutPrivateBrowsing 四个），已全部按「语义不变、156 实际文本重新定位」重建。
+
+**给后续的经验**：上游升级（改 candidate）后，先跑离线批量探测
+（PR #3 用的方法：248 个 patch × 156 原版逐个 git apply --check，同文件多 patch
+按 Import 顺序串行），再排构建 —— 省得 2h/轮地撞墙。
+另外 jar.mn 纯 CSS 条目不要加 * 前缀（* 会要求文件里有 % 指令，否则
+jar_maker 报 'no preprocessor directives found'）。
