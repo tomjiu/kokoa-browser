@@ -65,6 +65,7 @@ bash scripts/verify-artifact-modules.sh <产物目录>
 | dsh 接口三未知 | 已关闭（docs/dsh-0.1.5-interface.md + workitem-ai-panel-interface 第五节） |
 | 实机验收第一轮 | 完成（启动跳 GitHub / 默认浏览器弹窗 / 更新检查均已修，见 dfe54e1 等 8 提交） |
 | 单测 | 197 个用例 / 10 个文件全过；产物上重跑 197/197（构建 35069527609，check-artifact 18/18） |
+| 设置页 Kokoa 面板空白/闪烁 | **根因已定位并修**（template 顶层节点漏写 `data-category`，于是被 preferences.js 的 `search()` 立刻隐藏）。机制+证据见 `docs/settings-pane-mechanism.md`；新增两个守卫：`check.sh panes` + `check-artifact.py` 第 7 项，两者都对旧产物 35096636452 精确报 FAIL |
 
 # 三、之后再说（不阻塞）
 

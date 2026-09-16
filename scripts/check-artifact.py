@@ -1,4 +1,5 @@
 import zipfile, sys, re, glob, os, json
+import xml.etree.ElementTree as ET
 sys.stdout.reconfigure(encoding='utf-8')
 """
 核对一次构建产物（不需要实机）。
@@ -157,6 +158,40 @@ if bx:
             'browser.xhtml 连 zen-appcontent-wrapper 都没有 —— 形态与预期不符，先查这个')
 else:
     chk('AI 侧栏挂载进 browser.xhtml（在 sidebar-main 内展开）', False, '产物里没有 browser.xhtml')
+
+# 7. ★ 设置页面板 data-category（2026-09-16 加）
+#    【为什么必须在产物里查，而不是只查源码】
+#      展开/隐藏是运行时行为：preferences.js 的 search(category, "data-category")
+#      会把 #mainPrefPane 里 data-category != 当前类别的【直接子节点】全部
+#      hidden=true；template 展开后的顶层节点正好就是这些直接子节点。
+#      漏写 -> 设置页右侧空白 / 闪烁 / 内容残留到别的分类。
+#      （用户报的「Kokoa 设置页空白 + 内容出现在账户与同步那一栏」就是这个。）
+#    参考对象：Zen 自己的 pane 顶层节点全都写 data-category，同文件可对比。
+px = [n for n in names if n.endswith('browser/preferences/preferences.xhtml')]
+if px:
+    t = z.read(px[0]).decode('utf-8', 'replace')
+    m = re.search(r'<html:template\s+id="template-paneKokoa"\s*>(.*?)</html:template>',
+                  t, re.S)
+    if not m:
+        chk('★ Kokoa 面板 template 进了 preferences.xhtml', False,
+            '找不到 template-paneKokoa —— include 未生效')
+    else:
+        try:
+            proot = ET.fromstring(
+                '<root xmlns:html="http://www.w3.org/1999/xhtml">%s</root>' % m.group(1))
+            kids = list(proot)
+            miss = [k.tag.split('}')[-1] for k in kids
+                    if k.get('data-category') != 'paneKokoa']
+            chk('★ Kokoa 面板顶层节点都带 data-category="paneKokoa"',
+                bool(kids) and not miss,
+                ('%d 个顶层节点漏/错: %s' % (len(miss), ','.join(miss))) if miss
+                else '一个顶层节点都没有？')
+        except ET.ParseError as e:
+            chk('★ Kokoa 面板顶层节点都带 data-category="paneKokoa"', False,
+                '解析 template 失败: %s' % e)
+else:
+    chk('★ Kokoa 面板 template 进了 preferences.xhtml', False,
+        '产物里没有 browser/preferences/preferences.xhtml')
 
 # 输出
 npass = sum(1 for r in results if r[0])

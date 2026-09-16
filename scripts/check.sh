@@ -11,6 +11,7 @@
 #   bash scripts/check.sh prefs        只查 prefs 一致性
 #   bash scripts/check.sh l10n         只查本地化键
 #   bash scripts/check.sh brands       只查品牌残留
+#   bash scripts/check.sh panes        只查设置页面板的 data-category
 #
 # 【它不能替代构建】—— 它查不出语义错误、运行时错误、布局问题。
 # 但能让「构建一次要犹豫」变成「改完先跑 check，通过再排构建」。
@@ -533,6 +534,32 @@ check_mozconfig() {
   if [ $bad -eq 0 ]; then ok "mozconfig 里没有非法的 project_flag export"; fi
 }
 
+# ── ★ 2026-09-16 加：设置页面板顶层节点必须带 data-category ───────────────
+#
+# 【为什么加】Kokoa 设置页的表现一直是「空白 + 闪烁」，还出现过
+#   「内容跑到账户与同步那一栏」。读产物源码后确认根因：
+#     preferences.js 的 gotoPref() 在 categoryInfo.init()（= template 展开）之后
+#     【紧接着】调用 search(category, "data-category")：
+#       for (element of document.getElementById("mainPrefPane").children)
+#         element.getAttribute("data-category") == 当前类别 ? hidden=false : hidden=true
+#     template 展开后的【顶层节点】就是 #mainPrefPane 的直接子节点 ——
+#     漏写 data-category 的节点会被立刻隐藏。
+#   Zen 自己的 pane 全都写了（产物 zenLooksAndFeel 那段：L1870/L1874），
+#   我们的 template 一个都没写 —— 所以点什么都是空白。
+#
+# 这个错【语法检查、patch 检查、pref 检查全都看不出来】，只有实机打开设置页
+# 才看得见，而构建一次 ~3 小时 —— 所以单独做一个秒级静态检查。
+# 实现与完整解释见 scripts/check-pane-data-category.py。
+check_pane_category() {
+  local out
+  if out=$(python scripts/check-pane-data-category.py 2>&1); then
+    printf '%s\n' "$out"
+  else
+    printf '%s\n' "$out"
+    fail=1
+  fi
+}
+
 case "$MODE" in
   syntax) check_syntax ;;
   json)   check_json ;;
@@ -544,7 +571,8 @@ case "$MODE" in
   jarmn)  check_jarmn ;;
   mozbuild) check_mozbuild_dirs ;;
   mozconfig) check_mozconfig ;;
-  all)    check_syntax; check_json; check_prefs; check_l10n; check_brands; check_patches; check_kokoa_tests; check_jarmn; check_mozbuild_dirs; check_mozconfig ;;
+  panes)  check_pane_category ;;
+  all)    check_syntax; check_json; check_prefs; check_l10n; check_brands; check_patches; check_kokoa_tests; check_jarmn; check_mozbuild_dirs; check_mozconfig; check_pane_category ;;
   *)      say "用法: bash scripts/check.sh [syntax|json|prefs|l10n|brands|all]"; exit 2 ;;
 esac
 

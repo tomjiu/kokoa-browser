@@ -9,13 +9,39 @@
     preferences-xhtml.patch 里 #include 它，
     并加一个 <html:moz-page-nav-button view="paneKokoa"> 的导航按钮。
 
-  【★ 一个必须注意的陷阱】（TASK-06 发现，我已核实）
-    preferences-js.patch L27 的 template 展开条件是：
+  【★★ 陷阱 1（最容易忘，2026-09-16 实测踩过）：template 里每个顶层节点
+     都必须写 data-category="paneKokoa"】
+
+    原理：preferences.js 的
+        search(category, "data-category")   // gotoPref 里，init() 之后调用
+    会遍历 #mainPrefPane 的【直接子节点】，逐个数：
+        element.getAttribute("data-category") == 当前类别 ? hidden=false : hidden=true
+
+    template 展开后，template 里的顶层节点就成了 #mainPrefPane 的直接子节点，
+    所以【漏写 data-category 的节点会被立刻 hidden=true】。
+
+    症状（这三个都是同一个根因）：
+      · 设置页右侧【空白】—— 点进去内容闪一下就被隐藏；
+      · 【闪烁】—— init() 插进去到 search() 隐藏之间有一帧；
+      · 内容【跑到别的分类里】—— 展开时机不同（或该次没走到 search()）时，
+        这些节点不被隐藏，就一直显示在 #mainPrefPane 顶部，
+        而 Firefox 自己那些 pane 是 <setting-pane> 元素，视觉上就"挂在"账户与同步那一栏。
+
+    Zen 自己的 pane 全都这么写（产物 L1870/L1874 等）：
+        <hbox    class="subcategory" hidden="true" data-category="paneZenLooks">
+        <groupbox id="zenUrlbarGroup" hidden="true" data-category="paneZenLooks">
+    注意 hidden="true" 也要写：search() 只负责把匹配的改回 false，
+    不写的话在 search() 跑到之前会露出来。
+
+  【★ 陷阱 2：template 的展开条件】
+    preferences-js.patch 里展开条件是：
       if (template && (!srdSectionPrefs.all || categoryName.startsWith("paneZen")))
     我们的分类叫 paneKokoa —— 【不命中】。
     所以同一个 patch 里还要把条件改成：
       ... || categoryName.startsWith("paneZen") || categoryName.startsWith("paneKokoa")
-    否则面板【不会展开】（表现为右侧空白）。
+    否则 template 根本【不会展开】（也是右侧空白，但连闪都不闪）。
+    （browser.settings-redesign.enabled 在 Zen 里是 true，见 prefs/firefox/browser.yaml，
+      所以 srdSectionPrefs.all === true，会走"只看前缀"那个分支。）
 
   【命名】用 paneKokoa 而不是 paneZenKokoa：
     我们是在做自己的产品，不该把 Kokoa 挂在 Zen 的命名空间下。
@@ -23,11 +49,19 @@
 <!-- 逻辑脚本。照 zenLooksAndFeel.inc.xhtml 的模式：script 在 template 之前。 -->
 <script type="text/javascript" src="chrome://browser/content/preferences/kokoa-settings.js"/>
 <html:template id="template-paneKokoa">
-  <hbox class="subcategory" hidden="true">
+  <!-- 分类小标题。data-category 见文件头【陷阱 1】，下同。 -->
+  <hbox
+    id="kokoaCategory"
+    class="subcategory"
+    hidden="true"
+    data-category="paneKokoa">
     <html:h1 data-l10n-id="pane-kokoa-title"></html:h1>
   </hbox>
 
-  <groupbox>
+  <groupbox
+    id="kokoaAiGroup"
+    hidden="true"
+    data-category="paneKokoa">
     <html:h2 data-l10n-id="kokoa-section-ai"></html:h2>
     <description data-l10n-id="kokoa-ai-description"></description>
 
@@ -73,7 +107,10 @@
 
     【为什么默认隐藏这三项】见 menu.yaml 的注释。
   -->
-  <groupbox>
+  <groupbox
+    id="kokoaMenuGroup"
+    hidden="true"
+    data-category="paneKokoa">
     <html:h2 data-l10n-id="kokoa-section-menu"></html:h2>
     <description data-l10n-id="kokoa-menu-description"></description>
 
@@ -95,11 +132,11 @@
       preference="kokoa.menu.print.visible" />
     <checkbox
       id="kokoaMenuSaveFileVisible"
-      data-l10n-id="kokoa-menu-save-file"
+      data-l10n-id="kokoa.menu-save-file"
       preference="kokoa.menu.save-file.visible" />
     <checkbox
       id="kokoaMenuFxaVisible"
-      data-l10n-id="kokoa-menu-fxa"
+      data-l10n-id="kokoa.menu-fxa"
       preference="kokoa.menu.fxa.visible" />
   </groupbox>
 </html:template>
