@@ -62,6 +62,14 @@
   **true**（`prefs/firefox/browser.yaml` L83），redesign 下默认类别
   `kDefaultCategoryInternalName = "paneSync"`（preferences.js L749）。
 
+**为什么不能照抄 `<setting-pane>`**：Firefox 自家的 pane 是 `<setting-pane>` 元素，
+它自己就 `setAttribute("data-category", this.name)`（`setting-pane.mjs` L132）——
+和我们是同一个契约；但它**额外**写了
+`this.setAttribute("data-hidden-from-search", "true")`（L135），
+好让 `search()` 跳过上面那条 data-category 分支、改由 `paneshown` 事件自己控制显示。
+我们是展开在 `<html:template>` 位置的**普通节点**，必须走 data-category 分支，
+所以 **不能**加 `data-hidden-from-search`（加了就再没人管显示，等于永远隐藏）。
+
 正确写法（照 Zen：产物 L1870/L1874 一带）：
 ```xml
 <hbox    class="subcategory" hidden="true" data-category="paneKokoa">…</hbox>
