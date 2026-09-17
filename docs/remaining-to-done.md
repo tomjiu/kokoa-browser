@@ -65,8 +65,9 @@ bash scripts/verify-artifact-modules.sh <产物目录>
 | dsh 接口三未知 | 已关闭（docs/dsh-0.1.5-interface.md + workitem-ai-panel-interface 第五节） |
 | 实机验收第一轮 | 完成（启动跳 GitHub / 默认浏览器弹窗 / 更新检查均已修，见 dfe54e1 等 8 提交） |
 | 单测 | 197 个用例 / 10 个文件全过；产物上重跑 197/197（构建 35069527609，check-artifact 18/18） |
-| 应用内品牌 logo 清理 | 2026-09-17 去掉 `about:keyboard` 侧栏 + 配置文件选择器的字标（2 个 patch，均过 `preflight-patches.py` 真 `git apply --check`：2 通过 / 0 失败 / 0 跳过）；产物级新增 2 项断言。39 处品牌引用的逐条分类（去了 2、保留 26、关掉 7、查过没改 2）见 `docs/branding-removal.md`，复扫用 `scripts/scan-branding-refs.py` |
-| 设置页 Kokoa 面板空白/闪烁 | **根因已定位并修**（template 顶层节点漏写 `data-category`，于是被 preferences.js 的 `search()` 立刻隐藏）。机制+证据见 `docs/settings-pane-mechanism.md`；新增两个守卫：`check.sh panes` + `check-artifact.py` 第 7 项，两者都对旧产物 35096636452 精确报 FAIL |
+| 应用内品牌 logo 清理 | 2026-09-17 去掉 `about:keyboard` 侧栏 + 配置文件选择器的字标（2 个 patch，均过 `preflight-patches.py` 真 `git apply --check`：2 通过 / 0 失败 / 0 跳过）；产物级新增 2 项断言。39 处品牌引用的逐条分类（去了 2、保留 26、关掉 7、查过没改 2）见 `docs/branding-removal.md`，复扫用 `scripts/scan-branding-refs.py`。**产物确认待构建 `35165650008`（`a581869`）** —— 本项在 `987e3bf` 的产物里仍是 FAIL（那是预期的：patch 更晚） |
+| 设置页 Kokoa 面板空白/闪烁 | **根因已定位并修，且已在产物里证实**（template 顶层节点漏写 `data-category`，于是被 preferences.js 的 `search()` 立刻隐藏）。机制见 `docs/settings-pane-mechanism.md`；守卫：`check.sh panes` + `check-artifact.py` 第 7 项。**产物证据：构建 `35164347415`（`987e3bf`）该项 OK**，而旧产物 `35096636452` 精确报 `FAIL 3 个顶层节点漏/错: hbox,groupbox,groupbox` —— 见 `docs/build-35164347415-verified.md` |
+| pref 同名覆盖（欢迎页没被真正关掉） | **根因已定位并修**（`prefs/zen/welcome.yaml` 与 `prefs/kokoa/branding-behavior.yaml` 同名，ffprefs 按名稳定排序 + 目录序 → 我们的必输；`@cond` 在 official 构建里展开成 false）。修法：改到权威位置 + 删 4 条重复；守卫 `check.sh prefs-shadow`；**本地用真 ffprefs 生成器 A/B 验证**（修前 3 条 → 修后 1 条 true）。产物确认待构建 `35173069555`（`23c6d2f`） |
 
 # 三、之后再说（不阻塞）
 
