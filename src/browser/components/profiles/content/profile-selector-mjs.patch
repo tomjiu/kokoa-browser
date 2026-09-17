@@ -1,0 +1,26 @@
+diff --git a/browser/components/profiles/content/profile-selector.mjs b/browser/components/profiles/content/profile-selector.mjs
+index e1378f304c276e1c0162fc565a4518c306480be1..904fd076fa022bc8f4f33194c6a7598ad6dc3ece 100644
+--- a/browser/components/profiles/content/profile-selector.mjs
++++ b/browser/components/profiles/content/profile-selector.mjs
+@@ -157,6 +157,8 @@ export class ProfileSelector extends MozLitElement {
+     }
+   }
+ 
++  // Kokoa: removed the Firefox wordmark <img class="logo" src="chrome://branding/content/about-logo.svg">
++  // Brand logo inside the app is not wanted; functionality unchanged.
+   render() {
+     if (!this.profiles) {
+       return null;
+@@ -170,12 +172,6 @@ export class ProfileSelector extends MozLitElement {
+         rel="stylesheet"
+         href="chrome://global/skin/in-content/common.css"
+       />
+-      <img
+-        class="logo"
+-        data-l10n-id="profile-window-logo"
+-        data-l10n-attrs="alt"
+-        src="chrome://branding/content/about-logo.svg"
+-      />
+       <h1 data-l10n-id="profile-window-heading"></h1>
+       <p class="profiles-body-text" data-l10n-id="profile-window-body"></p>
+       <div class="profile-list">

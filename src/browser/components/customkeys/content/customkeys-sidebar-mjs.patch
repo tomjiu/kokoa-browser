@@ -1,0 +1,34 @@
+diff --git a/browser/components/customkeys/content/customkeys-sidebar.mjs b/browser/components/customkeys/content/customkeys-sidebar.mjs
+index 567220ca15b78ffd2946114a1cc36aa86982fbeb..481b62417490f71ef5bcc195b6b9e2c846666cce 100644
+--- a/browser/components/customkeys/content/customkeys-sidebar.mjs
++++ b/browser/components/customkeys/content/customkeys-sidebar.mjs
+@@ -9,7 +9,7 @@ import { MozLitElement } from "chrome://global/content/lit-utils.mjs";
+  * Local sidebar/banner element for about:keyboard.
+  *
+  * Renders as a sticky sidebar by default, and as a sticky header on narrower
+- * viewports. It includes the brand logo, page name, subheading text with a
++ * viewports. It includes the page name, subheading text with a
+  * support, a search and reset controls.
+  */
+ class CustomkeysSidebar extends MozLitElement {
+@@ -17,6 +17,8 @@ class CustomkeysSidebar extends MozLitElement {
+     return this;
+   }
+ 
++  // Kokoa: removed the Firefox wordmark <img class="brand-logo" src="chrome://branding/content/about-logo.png">
++  // Brand logo inside the app is not wanted; functionality unchanged.
+   render() {
+     return html`
+       <header
+@@ -25,11 +27,6 @@ class CustomkeysSidebar extends MozLitElement {
+         data-l10n-id="customkeys-sidebar"
+       >
+         <div class="customkeys-heading">
+-          <img
+-            class="brand-logo"
+-            alt=""
+-            src="chrome://branding/content/about-logo.png"
+-          />
+           <h1 class="customkeys-title" data-l10n-id="customkeys-title"></h1>
+         </div>
+         <p class="customkeys-description">

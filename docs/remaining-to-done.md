@@ -65,6 +65,7 @@ bash scripts/verify-artifact-modules.sh <产物目录>
 | dsh 接口三未知 | 已关闭（docs/dsh-0.1.5-interface.md + workitem-ai-panel-interface 第五节） |
 | 实机验收第一轮 | 完成（启动跳 GitHub / 默认浏览器弹窗 / 更新检查均已修，见 dfe54e1 等 8 提交） |
 | 单测 | 197 个用例 / 10 个文件全过；产物上重跑 197/197（构建 35069527609，check-artifact 18/18） |
+| 应用内品牌 logo 清理 | 2026-09-17 去掉 `about:keyboard` 侧栏 + 配置文件选择器的字标（2 个 patch，均过 `preflight-patches.py` 真 `git apply --check`：2 通过 / 0 失败 / 0 跳过）；产物级新增 2 项断言。39 处品牌引用的逐条分类（去了 2、保留 26、关掉 7、查过没改 2）见 `docs/branding-removal.md`，复扫用 `scripts/scan-branding-refs.py` |
 | 设置页 Kokoa 面板空白/闪烁 | **根因已定位并修**（template 顶层节点漏写 `data-category`，于是被 preferences.js 的 `search()` 立刻隐藏）。机制+证据见 `docs/settings-pane-mechanism.md`；新增两个守卫：`check.sh panes` + `check-artifact.py` 第 7 项，两者都对旧产物 35096636452 精确报 FAIL |
 
 # 三、之后再说（不阻塞）
@@ -72,7 +73,7 @@ bash scripts/verify-artifact-modules.sh <产物目录>
 | 项 | 说明 |
 |---|---|
 | AI 工作区侧栏第 2/3 步 | **第 1 步（最小可见）已落地并过产物验证**（35113050289：侧栏 css/ftl 进包 + 挂载进 browser.xhtml，31/31）；2026-09-17 起产物检查扩到 5 项（多了样式表/本地化 `<link>`，并修掉一个「DOM 没挂也能通过」的假 PASS）；待实机确认 include 位置后接 KokoaDshSessions（49 用例）做会话列表 UI |
-| branding 图标 | 现在还是 Zen/Firefox 图标（应用内 logo 清理已做一批：a4d5333 / cbda640 / f61ed9e） |
+| branding 图标 | 应用**图标**现在还是 Zen/Firefox 的图（需要美术，未做）；应用**内部**的 logo 已清理数批：a4d5333 / cbda640 / f61ed9e，2026-09-17 又去掉 `about:keyboard` 侧栏与配置文件选择器的字标（判据+完整分类+保留清单见 `docs/branding-removal.md`） |
 | dsh 会话切换 | **已查清：做不到**。当前会话是 dsh 页面本地状态，无 URL 路由、无外部触发通道（dsh-0.1.5-interface.md）；产品形态改为【列表展示 + 引导用户在 dsh 内切换】，强需则向 dsh 上游提 deep-link |
 | release 流水线的 zen-browser/* 引用 | 真做发布时才需要 |
 

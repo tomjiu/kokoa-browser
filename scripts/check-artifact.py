@@ -207,6 +207,23 @@ else:
     chk('★ Kokoa 面板 template 进了 preferences.xhtml', False,
         '产物里没有 browser/preferences/preferences.xhtml')
 
+# 8. ★ 应用内品牌 logo 清理（2026-09-17 加）
+#    只查【装饰性品牌标记】；功能性图标（favicon / 站点身份 / 页面图标 /
+#    功能按钮图标）不查 —— 判据与完整分类见 docs/branding-removal.md。
+#    【为什么在产物里查】源码里删掉不等于产物里删掉：patch 可能没应用，
+#    也可能被别的 patch 盖回去。产物才是会被加载的那份。
+for rel, label in [
+    ('browser/content/browser/customkeys/customkeys-sidebar.mjs', 'about:keyboard 侧栏'),
+    ('browser/content/browser/profiles/profile-selector.mjs', '配置文件选择器'),
+]:
+    hit = [n for n in names if n.endswith(rel)]
+    if not hit:
+        chk('★ %s 无品牌 logo' % label, False, '产物里找不到 ' + rel)
+        continue
+    t = z.read(hit[0]).decode('utf-8', 'replace')
+    chk('★ %s 无品牌 logo' % label, 'about-logo' not in t,
+        '仍有 about-logo 引用' if 'about-logo' in t else '已清除')
+
 # 输出
 npass = sum(1 for r in results if r[0])
 nfail = len(results) - npass
