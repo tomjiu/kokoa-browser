@@ -37,6 +37,37 @@ z = zipfile.ZipFile(omni)
 names = z.namelist()
 results = []
 
+def strip_comments(src):
+    """去掉 JS/TS 注释，只留代码。
+
+    用于「产物里还有没有品牌引用」这类判定：我们的 patch 会留一行说明性注释
+    （里面必然写着 about-logo），裸子串搜索会把这种情况判成「没修好」。
+    逐字符扫描而非正则，避免 /* 里套 // 之类的误判。
+    """
+    out = []
+    i, n = 0, len(src)
+    quote = None
+    while i < n:
+        c = src[i]
+        if quote:
+            out.append(c)
+            if c == '\\' and i + 1 < n:
+                out.append(src[i+1]); i += 2; continue
+            if c == quote: quote = None
+            i += 1; continue
+        if c in ('"', "'", '`'):
+            quote = c; out.append(c); i += 1; continue
+        if c == '/' and i + 1 < n and src[i+1] == '/':
+            while i < n and src[i] != chr(10): i += 1
+            continue
+        if c == '/' and i + 1 < n and src[i+1] == '*':
+            i += 2
+            while i + 1 < n and not (src[i] == '*' and src[i+1] == '/'): i += 1
+            i += 2; continue
+        out.append(c); i += 1
+    return ''.join(out)
+
+
 def chk(name, cond, detail=''):
     results.append((bool(cond), name, detail))
 
@@ -221,8 +252,13 @@ for rel, label in [
         chk('★ %s 无品牌 logo' % label, False, '产物里找不到 ' + rel)
         continue
     t = z.read(hit[0]).decode('utf-8', 'replace')
-    chk('★ %s 无品牌 logo' % label, 'about-logo' not in t,
-        '仍有 about-logo 引用' if 'about-logo' in t else '已清除')
+    # 只看**代码**里还有没有引用，不看注释。
+    # 我们的 patch 是「删掉 <img> 并留一行说明性注释」，注释里必然出现
+    # about-logo 字样 —— 早期这里做裸子串搜索，于是把「已修好」判成 FAIL（假红）。
+    # 判据本身也要经得起核对，否则和「构建 success 就当修好了」是同一类错误。
+    code = strip_comments(t)
+    chk('★ %s 无品牌 logo' % label, 'about-logo' not in code,
+        '仍被代码引用' if 'about-logo' in code else '已清除（注释里的说明不计）')
 
 # 输出
 npass = sum(1 for r in results if r[0])
