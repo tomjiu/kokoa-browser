@@ -168,6 +168,33 @@ git merge-base --is-ancestor <commit> $sha   # 0 = 在构建里
 
 ---
 
+# 十一、★ 检查器会说谎（假 FAIL 一次，假 PASS 一次）
+
+同一个检查器 `scripts/check-artifact.py` 骗过我两次，方向相反：
+
+```
+1) 假 FAIL（构建 35096636452）：「4 个 pref 缺」—— 其实都在产物里。
+   根因：收集用的正则只认 kokoa.menu|browser.shell 两个前缀，
+        往 expect 里加了 app.update.* / asrouter.* 却没扩正则。
+2) 假 PASS（2026-09-17 发现）：判「侧栏 DOM 已挂载」用的是子串
+   'kokoa-ai-sidebar' in browser.xhtml —— 可这条子串同时出现在
+   <link rel="stylesheet" href=".../kokoa-ai-sidebar.css"> 和
+   <link rel="localization" href="browser/kokoa-ai-sidebar.ftl"> 里，
+   于是【DOM 根本没挂上也能通过】。
+```
+
+**教训**：一个判定串要**唯一指向被判定的事实**。
+
+- 假 FAIL 浪费一轮排查（至少不放过问题）；
+- **假 PASS 更危险** —— 它让人以为已经验证过了。
+
+所以侧栏的产物检查拆成了 5 项，各用各的判定串：
+`id="kokoa-ai-sidebar"` / `zen-styles/kokoa-ai-sidebar.css` /
+`kokoa-ai-sidebar.ftl` 分别判 DOM 挂载 / 样式表 `<link>` / 本地化 `<link>`，
+另两项判 css、ftl 是否进包。
+
+---
+
 # 总结：写测试的三条铁律
 
 ```

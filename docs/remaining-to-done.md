@@ -71,7 +71,7 @@ bash scripts/verify-artifact-modules.sh <产物目录>
 
 | 项 | 说明 |
 |---|---|
-| AI 工作区侧栏第 2/3 步 | **第 1 步（最小可见）已落地并过产物验证**（35113050289：侧栏 css/ftl 进包 + 挂载进 browser.xhtml，31/31）；待实机确认 include 位置后接 KokoaDshSessions（49 用例）做会话列表 UI |
+| AI 工作区侧栏第 2/3 步 | **第 1 步（最小可见）已落地并过产物验证**（35113050289：侧栏 css/ftl 进包 + 挂载进 browser.xhtml，31/31）；2026-09-17 起产物检查扩到 5 项（多了样式表/本地化 `<link>`，并修掉一个「DOM 没挂也能通过」的假 PASS）；待实机确认 include 位置后接 KokoaDshSessions（49 用例）做会话列表 UI |
 | branding 图标 | 现在还是 Zen/Firefox 图标（应用内 logo 清理已做一批：a4d5333 / cbda640 / f61ed9e） |
 | dsh 会话切换 | **已查清：做不到**。当前会话是 dsh 页面本地状态，无 URL 路由、无外部触发通道（dsh-0.1.5-interface.md）；产品形态改为【列表展示 + 引导用户在 dsh 内切换】，强需则向 dsh 上游提 deep-link |
 | release 流水线的 zen-browser/* 引用 | 真做发布时才需要 |

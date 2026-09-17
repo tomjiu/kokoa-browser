@@ -162,13 +162,18 @@ TASK-04 给了一条可执行的判据，我认为这是整份文档最有价值
 
 ## 产物层验证（不用实机）
 
-check-artifact.py 新增 3 项（当前全套 31 项）：
+check-artifact.py 新增 5 项（2026-09-17 从 3 项扩到 5 项）：
 - AI 侧栏 css 进包（jar.mn 直打包）
 - AI 侧栏文案进包（ftl）
-- AI 侧栏挂载进 browser.xhtml（include 经预处理展开；用 zen-appcontent-wrapper 做
-  「形态 sanity」—— 若连 Zen 标记都查不到，先怀疑检查自身假设）
+- AI 侧栏 DOM 挂载进 browser.xhtml（判据 `id="kokoa-ai-sidebar"`）
+- AI 侧栏样式表 `<link>` 进 browser.xhtml（zen-assets.inc.xhtml L31；**没有它 css 进包也不生效**）
+- AI 侧栏本地化 `<link>` 进 browser.xhtml（zen-locales.inc.xhtml）
 
-分支行为已用假 omni.ja 双向验证：无侧栏恰 3 FAIL（含「include 未生效」文案）、有侧栏全 OK。
+【★ 为什么从 3 项变 5 项】原来的「挂载」判定用子串 `'kokoa-ai-sidebar' in browser.xhtml`，
+而这条子串同时也出现在上面两条 `<link>` 里 —— **DOM 根本没挂上也能通过**（假 PASS）。
+「检查器会说谎」这次是反方向的第二次，见 `docs/testing-pitfalls.md` 第十一节。
+
+分支行为已用假 omni.ja 双向验证：无侧栏恰 5 FAIL（含「include 未生效」文案）、有侧栏全 OK。
 
 ## 待实机（只有人能做）
 

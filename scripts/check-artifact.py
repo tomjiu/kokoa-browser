@@ -145,19 +145,33 @@ chk('AI 侧栏文案进包', ftl_hit, ftl_hit[0] if ftl_hit else '缺 kokoa-ai-s
 bx = [n for n in names if n.endswith('browser.xhtml')]
 if bx:
     t = z.read(bx[0]).decode('utf-8','replace')
-    has_ours = 'kokoa-ai-sidebar' in t
+    # 【★ 这里以前会「说假话」】原版只查子串 'kokoa-ai-sidebar' 在不在 ——
+    #   可是这条子串同时出现在
+    #     <link rel="stylesheet" href=".../zen-styles/kokoa-ai-sidebar.css">
+    #     <link rel="localization" href="browser/kokoa-ai-sidebar.ftl">
+    #   里，于是【DOM 根本没挂上也能通过】。
+    #   「检查器会说谎」这条在 docs/testing-pitfalls.md 记过一次（pref 假 FAIL），
+    #   这是第二次：那次是假 FAIL，这次是假 PASS —— 假 PASS 更危险。
+    #   现在三项各用各的判定串，互不代偿。
+    mounted = 'id="kokoa-ai-sidebar"' in t
+    css_link = 'zen-styles/kokoa-ai-sidebar.css' in t
+    ftl_link = 'kokoa-ai-sidebar.ftl' in t
     has_zen = 'zen-appcontent-wrapper' in t
-    if has_ours:
-        chk('AI 侧栏挂载进 browser.xhtml（在 sidebar-main 内展开）', True,
-            'zen 标记' + ('同在' if has_zen else '异常缺失'))
-    elif has_zen:
-        chk('AI 侧栏挂载进 browser.xhtml（在 sidebar-main 内展开）', False,
-            'browser.xhtml 有 zen 标记但无 kokoa-ai-sidebar —— include 未生效')
-    else:
-        chk('AI 侧栏挂载进 browser.xhtml（在 sidebar-main 内展开）', False,
-            'browser.xhtml 连 zen-appcontent-wrapper 都没有 —— 形态与预期不符，先查这个')
+    chk('AI 侧栏 DOM 挂载进 browser.xhtml（id="kokoa-ai-sidebar" 在 sidebar-main 内）',
+        mounted,
+        'browser.xhtml 有 zen 标记但没挂上 —— include 未生效' if has_zen
+        else 'browser.xhtml 连 zen-appcontent-wrapper 都没有 —— 形态与预期不符，先查这个')
+    chk('AI 侧栏样式表 <link> 进 browser.xhtml（否则 css 进了包也不生效）',
+        css_link, 'zen-assets.inc.xhtml L31 的 <link> 没被 include 进来')
+    chk('AI 侧栏本地化 <link> 进 browser.xhtml（否则文案键取不到）',
+        ftl_link, 'zen-locales.inc.xhtml 的 <link rel="localization"> 没被 include 进来')
 else:
-    chk('AI 侧栏挂载进 browser.xhtml（在 sidebar-main 内展开）', False, '产物里没有 browser.xhtml')
+    chk('AI 侧栏 DOM 挂载进 browser.xhtml（id="kokoa-ai-sidebar" 在 sidebar-main 内）',
+        False, '产物里没有 browser.xhtml')
+    chk('AI 侧栏样式表 <link> 进 browser.xhtml（否则 css 进了包也不生效）',
+        False, '产物里没有 browser.xhtml')
+    chk('AI 侧栏本地化 <link> 进 browser.xhtml（否则文案键取不到）',
+        False, '产物里没有 browser.xhtml')
 
 # 7. ★ 设置页面板 data-category（2026-09-16 加）
 #    【为什么必须在产物里查，而不是只查源码】
