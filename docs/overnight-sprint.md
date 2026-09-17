@@ -31,7 +31,7 @@
 
 **试验田**：https://github.com/tomjiu/kokoa-browser （**公开**，独立于主仓）
 - 上游：https://github.com/zen-browser/desktop （MPL-2.0，默认分支 `dev`）
-- 主仓（**绝对不要碰**）：`E:\Code\ai\kokoa-workspace\kokoa`
+- 主仓（**2026-09-17 起可直接改**；原「绝对不要碰」随并行任务结束解除）：`E:\Code\ai\kokoa-workspace\kokoa`
 
 **构建可行性已经验证过了**（今晚之前）：
 ```
@@ -45,8 +45,8 @@
 # 三、铁律（**违反即今晚作废**）
 
 ```
-1. 绝对不要修改  E:\Code\ai\kokoa-workspace\kokoa  下的任何文件 —— 那是产品主线，
-   有别的 AI 在并行开发，你改一个字节都可能毁掉它们的工作。只读参考可以。
+1. 【已解除 · 2026-09-17】原文：绝对不要修改  E:\Code\ai\kokoa-workspace\kokoa  下的任何文件 ——
+   那是产品主线，有别的 AI 在并行开发。该并行任务已结束，主仓现在可以直接改。
 2. 绝对不要修改已安装的 Zen：C:\Program Files\Zen Browser\
 3. 不要在本机安装任何构建工具链（MozillaBuild / VS 组件等）—— 构建全部在 CI 上做
 4. 不要改 probe-zen-cross-build.yml 里的构建参数（PGO / LTO / 目标平台）
@@ -104,7 +104,7 @@
 ```
 
 > **本机 `gh` 已登录 tomjiu，git 凭据已配好，push 可直接进行。**
-> 不要动主仓的任何 remote。
+> 【已解除 · 2026-09-17】原文：不要动主仓的任何 remote（随并行任务结束失效）。
 
 ### 验收标准（**缺一不可**）
 
@@ -203,7 +203,7 @@
 # 五、**明确不要做的事**
 
 ```
-- ❌ 不要碰主仓 E:\Code\ai\kokoa-workspace\kokoa
+- ~~❌ 不要碰主仓 E:\Code\ai\kokoa-workspace\kokoa~~ 【已解除 · 2026-09-17】
 - ❌ 不要改构建参数（PGO / LTO / 目标平台）去"让它编过"
 - ❌ 不要在本机装构建工具链 —— 构建只在 CI 上
 - ❌ 不要动 dsh（AI 内核）那边的东西 —— 它跑在独立进程里，今晚完全无关
