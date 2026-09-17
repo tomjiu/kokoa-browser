@@ -2,57 +2,46 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-# Kokoa —— 首次运行 / 欢迎页 / 默认浏览器 / 任务栏的行为。
+# Kokoa —— 首次运行 / 默认浏览器 / 更新检查的行为。
 #
-# 【2026-09-16 用户反馈后重写】
-#   用户报：「又有固定任务栏通知和初始设置页面了」
-#   根因：初始设置页（欢迎页）本身带「设为默认 + 固定任务栏」步骤。
-#         而控制欢迎页的两个 pref 我们【根本没设】。
+# 【★ 2026-09-17 修正：这个文件里原有 4 条【根本不生效】】
+#   产物核对（构建 35163254400）发现：prefs 引擎 last wins，而 ffprefs 按【pref 名】
+#   稳定排序输出、同名条目保持目录遍历序 —— kokoa/ 排在 privatefox/ 与 zen/ 之前，
+#   于是这些同名条目由更靠后的目录胜出：
 #
-# 【★ 每个 pref 都标注「谁在读它」—— 用产物全量 grep 得到】
-#   这份文件原来有 5 个 pref 是【凭空写的】（代码里没人读），
-#   设了没用 —— 会让人误以为「已经关掉了」。所以这次逐个核实并清理。
+#     pref                                            本文件原值   实际赢家                        影响
+#     zen.welcome-screen.seen                         true        zen/welcome.yaml（@cond→false）  ✗ 欢迎页照常出现
+#     browser.aboutwelcome.enabled                    false       privatefox/disablemozilla.yaml   ✓ 同值
+#     ...activity-stream.asrouter.userprefs.cfr.features false    privatefox/disablemozilla.yaml   ✓ 同值
+#     ...activity-stream.asrouter.userprefs.cfr.addons   false    privatefox/disablemozilla.yaml   ✓ 同值
+#
+#   → 三条同值的已从本文件删除（删了不影响行为，只是不再自欺）；
+#     zen.welcome-screen.seen 改到权威位置 prefs/zen/welcome.yaml（那边已改成 true）。
+#   → **规则：同一条 pref 只在一个地方定义。** 本目录只放"别处没人定义"的 Kokoa 自有 pref。
+#     守卫：scripts/check-pref-shadowing.py（bash scripts/check.sh prefs-shadow）。
+#
+# 【为什么之前会写成这样】原文的推理是「控制欢迎页的 pref 我们没设 → 那就设上」。
+#   推理没错，错在**没有核对产物里最终生效的是哪一条** —— 设了 ≠ 生效。
 
-# ── 一、初始设置页（欢迎页）—— 这两个是这次新加的，也是关键 ──────
-
-# Zen 自己的欢迎页（ZenStartup.mjs 的 #checkForWelcomePage）
-#   读法：getBoolPref("zen.welcome-screen.seen", false)
-#   为 false 时 loadSubScript 加载 ZenWelcome.mjs -> 显示欢迎页
-#   设为 true 后【连脚本都不加载】
-- name: zen.welcome-screen.seen
-  value: true
-
-# Firefox 的 about:welcome / preonboarding（BrowserGlue.sys.mjs /
-# PreonboardingSplash.sys.mjs 读）
-- name: browser.aboutwelcome.enabled
-  value: false
-
-# ── 二、默认浏览器提示 ───────────────────────────────────────
-
+# ── 默认浏览器提示 ───────────────────────────────────────────
+#
 # 读它的：AboutWelcomeDefaults.sys.mjs / MessagingTargetingConstants.sys.mjs /
 #         OnboardingMessageProvider.sys.mjs（还有 Windows shell 集成）
 - name: browser.shell.checkDefaultBrowser
   value: false
 
-# ── 三、★「推荐消息」总开关 —— 关「设为默认 / 固定任务栏」的那条 infobar ──
+# ── ★「推荐消息」总开关（实际定义在 prefs/privatefox/disablemozilla.yaml）─────
 #
-# 读它的：ASRouterPreferences.sys.mjs / ASRouterTargeting.sys.mjs /
-#         MessagingTargetingConstants.sys.mjs
-#
-# 为什么光有 checkDefaultBrowser=false 不够（读 OnboardingMessageProvider 的
-# INFOBAR_DEFAULT_AND_PIN_87 的 targeting 得到）：
+# 关的是「设为默认 / 固定任务栏」那条 infobar。为什么光有 checkDefaultBrowser=false
+# 不够（读 OnboardingMessageProvider 的 INFOBAR_DEFAULT_AND_PIN_87 targeting 得到）：
 #   firefoxVersion >= 138 && source == "startup" && !isDefaultBrowser
 #   && !checkDefaultBrowser
 #   && (现在 - userDisabledDefaultCheck) >= 7 天      <- 每周会再劝一次
 #   && profile 创建 >= 5 周 && profile < 15 周
 #   && ● asrouter.userprefs.cfr.features ●            <- 就是这个开关
-- name: browser.newtabpage.activity-stream.asrouter.userprefs.cfr.features
-  value: false
+# 这两条现在由 privatefox/disablemozilla.yaml 定义（同值 false），本文件不再重复。
 
-- name: browser.newtabpage.activity-stream.asrouter.userprefs.cfr.addons
-  value: false
-
-# ── 四、更新检查（Kokoa 还没有更新服务器）──────────────────
+# ── 更新检查（Kokoa 还没有更新服务器）──────────────────
 #
 # app.update.url.* 指向我们的 GitHub 仓库，那里没有 update.xml，
 # 所以「检查更新」必然失败。

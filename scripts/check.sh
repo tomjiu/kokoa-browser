@@ -12,6 +12,7 @@
 #   bash scripts/check.sh l10n         只查本地化键
 #   bash scripts/check.sh brands       只查品牌残留
 #   bash scripts/check.sh panes        只查设置页面板的 data-category
+#   bash scripts/check.sh prefs-shadow 只查 pref 同名覆盖（写了不生效的那个坑）
 #
 # 【它不能替代构建】—— 它查不出语义错误、运行时错误、布局问题。
 # 但能让「构建一次要犹豫」变成「改完先跑 check，通过再排构建」。
@@ -560,6 +561,30 @@ check_pane_category() {
   fi
 }
 
+# ── ★ 2026-09-17 加：pref 同名覆盖检查 ──────────────────────────────────
+#
+# 【为什么加】用户报的「启动又出现固定任务栏通知 + 初始设置页」我改了 6 条 pref，
+# 但产物核对发现其中【最关键那条根本没生效】：
+#   defaults/preferences/firefox.js（构建 35163254400）
+#     L1860  pref("zen.welcome-screen.seen", true);    <- prefs/kokoa/（我们的）
+#     L1862  pref("zen.welcome-screen.seen", false);   <- prefs/zen/welcome.yaml
+# 根因（读 tools/ffprefs/src/main.rs 坐实，不是猜）：
+#   · 收集文件用 fs::read_dir，**不对条目排序** -> 遍历顺序没有保证
+#   · 输出前 prefs.sort_by(name)，而 Rust 的 sort_by 是稳定排序 -> 同名条目保持遍历序
+#   · prefs 引擎 last wins
+#   => 同一条 pref 写两遍时「谁赢」不确定；我们的 kokoa/ 恰好排在 zen/ 前面，必输。
+# 这个错【语法 / prefs / patch 三项检查都看不出来】—— 只有读产物或本地跑 ffprefs 才暴露。
+# 实现与完整事故记录见 scripts/check-pref-shadowing.py。
+check_pref_shadowing() {
+  local out
+  if out=$(python scripts/check-pref-shadowing.py 2>&1); then
+    printf '%s\n' "$out"
+  else
+    printf '%s\n' "$out"
+    fail=1
+  fi
+}
+
 case "$MODE" in
   syntax) check_syntax ;;
   json)   check_json ;;
@@ -572,7 +597,8 @@ case "$MODE" in
   mozbuild) check_mozbuild_dirs ;;
   mozconfig) check_mozconfig ;;
   panes)  check_pane_category ;;
-  all)    check_syntax; check_json; check_prefs; check_l10n; check_brands; check_patches; check_kokoa_tests; check_jarmn; check_mozbuild_dirs; check_mozconfig; check_pane_category ;;
+  prefs-shadow) check_pref_shadowing ;;
+  all)    check_syntax; check_json; check_prefs; check_l10n; check_brands; check_patches; check_kokoa_tests; check_jarmn; check_mozbuild_dirs; check_mozconfig; check_pane_category; check_pref_shadowing ;;
   *)      say "用法: bash scripts/check.sh [syntax|json|prefs|l10n|brands|all]"; exit 2 ;;
 esac
 

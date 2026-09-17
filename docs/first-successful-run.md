@@ -61,7 +61,7 @@ user_pref("zen.welcome-screen.seen", true);
 | 方案 | 做法 | 评价 |
 |---|---|---|
 | **改源码**（推荐） | 改 `ZenStartup.mjs` L176，让默认就走 else 分支（把 `kWelcomeScreenSeenPref` 的默认值从 false 改成 true） | 源码级修改，可搬运性不受影响，正是分支路线该做的 |
-| 写默认层 pref | `defaults/preferences/*.js` 里 `pref("zen.welcome-screen.seen", true)` | ⚠️ **不可靠** —— 主线已实测默认层对一部分 pref 静默失效 |
+| 写默认层 pref | `defaults/preferences/*.js` 里 `pref("zen.welcome-screen.seen", true)` | ⚠️ 当时记为「默认层静默失效」。**真因已查明（2026-09-17，见 `prefs-mechanism-CONFIRMED.md` 第六节）**：`prefs/zen/welcome.yaml` 里 Zen 自己也定义了同名 pref，而 ffprefs 对同名条目保持目录遍历序、prefs 引擎后定义覆盖前定义 —— `kokoa/` 在 `zen/` 之前，所以我们那条**必输**。已改成从权威位置（`prefs/zen/welcome.yaml`）无条件 `true`，并加守卫 `check.sh prefs-shadow` |
 | 做自己的欢迎页 | 保留机制，换 Kokoa 首启页 | 工作量大，用户明确说「暂时不需要」 |
 
 ## ★ 另一个重要发现：之前「空白窗口」的测试是误判

@@ -98,6 +98,79 @@ engine/modules/libpref/init/zen-static-prefs.inc  <- 文件名是 zen
    而真相在 L110。**
 ```
 
+# 六、★ 同名覆盖：为什么「pref 写对了却不生效」（2026-09-17 补）
+
+本文机制的直接推论，但直到**产物核对**才被抓住 —— 它让一次用户可见的修复白做了一轮。
+
+## 事故
+
+用户报「启动又出现固定任务栏通知 + 初始设置页」。我在 `prefs/kokoa/branding-behavior.yaml`
+里加了 6 条 pref（含 `zen.welcome-screen.seen: true`），本地与 CI 全绿。
+构建 35163254400 的产物核对却显示：
+
+```
+defaults/preferences/firefox.js
+  L1860  pref("zen.welcome-screen.seen", true);    <- prefs/kokoa/（我们的）
+  L1862  pref("zen.welcome-screen.seen", false);   <- prefs/zen/welcome.yaml（@cond 展开）
+```
+
+**关键那条被吃了** —— 欢迎页照常出现。当时文档把它误记成「默认层静默失效」，真因不是。
+
+## 机制（`tools/ffprefs/src/main.rs`）
+
+```
+L139-154  get_prefs_files_recursively()   递归收集 prefs/**/*.yaml
+          —— fs::read_dir 的结果【没有排序】-> 遍历顺序没有保证（跨文件系统可能不同）
+L133-136  ordered_prefs(): prefs.sort_by(|a,b| a.name.cmp(&b.name))
+          —— Rust 的 sort_by 是【稳定排序】-> 同名条目保持上面的遍历序
+          输出 -> engine/browser/app/profile/zen.js（被 #include 在 firefox.js 末尾）
+prefs 引擎：后定义覆盖前定义（last wins）
+```
+
+→ 同一条 pref 写两遍时，**谁赢取决于目录遍历顺序**：既反直觉，又跨文件系统不确定。
+我们那条恰好 `kokoa/` 在 `zen/` 之前 → 必输。
+
+## 为什么 `@cond` 出的是 false
+
+`prefs/zen/welcome.yaml` 原本是 `value: "@cond"` + `condition: "!defined(MOZILLA_OFFICIAL)"`。
+ffprefs（L234-243）把 `@cond` 展开成：
+
+```
+#if !defined(MOZILLA_OFFICIAL)
+pref("zen.welcome-screen.seen", true);
+#else
+pref("zen.welcome-screen.seen", false);
+#endif
+```
+
+**我们的构建是 official**（产物里留下的是 `false`）→ 走 `#else`。
+顺带：这条上的 `sticky: true` 在 `@cond` 分支里**从来没生效**（那条路径不带第三参数）。
+
+## 修法与守卫
+
+- **修法：同一条 pref 只在一处定义。** 这次把 `zen.welcome-screen.seen` 改到它的权威位置
+  `prefs/zen/welcome.yaml`（无条件 `true`），并从 `prefs/kokoa/` 删掉 3 条同值重复。
+- **守卫**：`scripts/check-pref-shadowing.py`（`bash scripts/check.sh prefs-shadow`，已并入 `all`）
+  —— `prefs/kokoa/` 里出现同名覆盖即 FAIL。静态看不出 `condition`，所以上游同名降级为 WARN
+  （例如 mods.yaml 的 `zen.injections.match-urls` 两条是**条件互斥**，无害）。
+- **本地验证配方（不用等 3 小时构建）**：在沙箱里跑**真生成器**看 zen.js 的最终取值。
+
+  ```bash
+  lab=/tmp/lab; rm -rf $lab; mkdir -p $lab/tools
+  cp -r prefs $lab/
+  cp -r tools/ffprefs $lab/tools/
+  mkdir -p $lab/engine/browser/app/profile $lab/engine/modules/libpref/init
+  echo '// sandbox' > $lab/engine/browser/app/profile/firefox.js
+  (cd $lab/tools/ffprefs && cargo run --quiet --bin ffprefs -- $lab)
+  grep -n "zen.welcome-screen.seen" $lab/engine/browser/app/profile/zen.js
+  ```
+
+  本次实测：修复前 3 条（`true` / `#if` 分支 `true` / `#else` 分支 `false`），
+  修复后 **只有 1 条 `pref("zen.welcome-screen.seen", true)`**；
+  `git diff --no-index` 两版 zen.js，差异**恰好只有**预期那几处。
+
+---
+
 # 五、对文档的影响
 
 ```

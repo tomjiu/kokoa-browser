@@ -2,7 +2,33 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+# 【Kokoa 改动 · 2026-09-17】原本是：
+#     value: "@cond"
+#     sticky: true
+#     condition: "!defined(MOZILLA_OFFICIAL)"
+#
+# ffprefs 把 "@cond" 展开成
+#     #if <condition>
+#     pref("<name>", true);
+#     #else
+#     pref("<name>", false);
+#     #endif
+# 而**我们的构建是 official**（产物里留下的是 pref("zen.welcome-screen.seen", false)，
+# 见构建 35163254400 的 defaults/preferences/firefox.js L1862）→ 走 #else → 欢迎页照常出现。
+#
+# 为什么必须改【这里】，而不是在 prefs/kokoa/ 里写一条 true：
+#   · prefs 引擎 **last wins**；ffprefs 按【pref 名】做稳定排序后输出，
+#     同名条目保持目录遍历序 —— kokoa/ 在 zen/ 之前，所以我们那条永远被这条覆盖
+#     （产物实测：我们的 true 在前、这条 false 在后）。
+#   · 更糟的是 fs::read_dir 顺序**没有保证**（跨文件系统/平台可能不同），
+#     也就是"谁覆盖谁"本身是不确定的。
+#   → 结论：同一条 pref 只能有一个定义，权威位置就在这里。
+#
+# 顺带：原来的 sticky: true 在 "@cond" 分支里**根本没生效**（ffprefs 走的是不含第三参数的
+# 早返回，见 tools/ffprefs/src/main.rs L234-243）；改成普通值后它才会生效 —— 我们不需要，故去掉。
+#
+# 产品理由：Kokoa 不做 Zen 的欢迎页（它自带「设为默认 + 固定任务栏」步骤，用户明确不要），
+# 而且 docs/first-successful-run.md 记过：非 official 构建下这条为 false 时欢迎页会加载
+# 但渲染不出来，导致窗口空白卡住。所以 Kokoa 全构建一律 true。
 - name: zen.welcome-screen.seen
-  value: "@cond"
-  sticky: true
-  condition: "!defined(MOZILLA_OFFICIAL)"
+  value: true
