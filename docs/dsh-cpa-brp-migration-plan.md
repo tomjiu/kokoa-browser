@@ -1,6 +1,6 @@
 # dsh / CPA / BRP 迁入浏览器 — 盘点与施工计划
 
-> 状态：计划已确认（2026-09-18）
+> 状态：计划已确认（2026-09-18）；Phase 0 复核 + 0.7 BRP MCP 注入（2026-09-18 晚）
 > 范围：把主线 `kokoa` 的 dsh 运行时、CPA、BRP 能力迁到以本仓为底座的产品链（C 链）
 > 关联：`remaining-to-done.md`（AI 主线）· 主线 `docs/dsh-frontend-migration.md`（前端 A/B/C 分类）· 主线 `docs/launch-paths.md`（三启动链）
 
@@ -42,6 +42,7 @@
 | 3 | **CPA 全链**（bin + config + lifecycle + 设置页区） | `cpa-config.ts` / `cpa-lifecycle.ts` / `kokoa.mjs` | **P0** |
 | 4 | **dsh 设置直写** `settings.yaml` | `dsh-settings.ts` + `/kokoa/dsh/settings` | **P0** |
 | 5 | **BRP 接入**（lockfile 发现 + MCP 守卫） | `brp-client.ts` + `packages/browser-firefox-mcp` | **P0** |
+| 5b | **产品 dsh-home BRP MCP 注入**（cordis `dsh-mcp-client`，非 profile.json） | `ensure-dsh-cpa-provider.ps1` | **P0** ✅ |
 | 6 | **dsh 插件五件套** + junction 注册链 | `packages/dsh-plugin-*` + `integrate-browser.ps1` | **P1** |
 | 7 | **about:kokoa 首页 / 文件树 / 会话历史** | `home.js` / `sessions.*` / `fs-list` | **P1** |
 | 8 | **启动器**（token 抓取+校验） | `scripts/start-kokoa.ps1` | **P1** |
@@ -82,16 +83,25 @@ force 布局、悬浮面板、硬编码 token、会话切换遥控、Playwright�
 
 **目标**：一条命令 → sidecar + dsh + brp-bridge + 浏览器，状态全绿。
 
-| 步骤 | 做什么 | 验收 |
-|---|---|---|
-| 0.1 | `start-kokoa.ps1`：起 dsh 前 **起 `brp-bridge.exe`**（写 lockfile），退出收尸 | lockfile 出现且 pid 活 |
-| 0.2 | 同脚本起 **sidecar**（`apps/sidecar/dist`），等 `/kokoa/health` | 8318 200 |
-| 0.3 | 修 `brp.json`：`sys.executable` 绝对路径；**去掉写死 9817**，只靠 lockfile | dsh MCP 能拉 adapter |
-| 0.4 | CPA 状态源统一到 sidecar `/kokoa/cpa/status` | 不再「状态读取失败」双源矛盾 |
-| 0.5 | 启动日志四行：`sidecar_ready` / `brp_lock` / `cpa_bin` / `dsh_token` | 失败可定位 |
-| 0.6 | 真机跑 `manual-test-checklist` | 401 / 分屏 / 设置 / BRP |
+| 步骤 | 做什么 | 验收 | 状态（2026-09-18 复核） |
+|---|---|---|---|
+| 0.1 | `start-kokoa.ps1`：起 dsh 前 **起 `brp-bridge.exe`**（写 lockfile），退出收尸 | lockfile 出现且 pid 活 | ✅ 实测 lock pid 活、9817 通 |
+| 0.2 | 同脚本起 **sidecar**（`apps/sidecar/dist`），等 `/kokoa/health` | 8318 200 | ✅ health 200 |
+| 0.3 | 修 `brp.json`：`sys.executable` 绝对路径；**9817 仅作无 lockfile 回退**（实现保留回退，与原文「去掉写死」略偏，可接受） | dsh MCP 能拉 adapter | ✅ 绝对路径已落；回退保留 |
+| 0.4 | CPA 状态源统一到 sidecar `/kokoa/cpa/status` | 不再「状态读取失败」双源矛盾 | ✅ 消费方全指 8318；旧双源控制条已删（`b92da05`） |
+| 0.5 | 启动日志：`sidecar_ready` / `brp_lock` / `cpa_bin` / `dsh_token` | 失败可定位 | ✅ `KOKOA-STARTUP.txt`；复测 `dsh_token=ok validate=http-ok` |
+| 0.6 | 真机跑 `manual-test-checklist` | 401 / 分屏 / 设置 / BRP | ⬜ 仍开放（M0 最后一勾） |
+| 0.7 | **产品 dsh-home 注入 BRP MCP**（`dsh-mcp-client` → cordis.patch.yml） | AI 能调 `mcp__brp__*` | ✅ `ensure-dsh-cpa-provider.ps1` 幂等注入；Config schema 校验过 |
+
+**复测证据（2026-09-18 21:27，`-NoLaunch`）**：
+`brp_lock=ok pid=7980` · `sidecar_ready=true` · `dsh_token=ok validate=http-ok` ·
+CPA `managed:true running:true` · 端口 3081/8318/9817/28317 均 LISTENING。
 
 **不做**：新功能、A 类大搬迁。
+
+**文档勘误**：`docs/browser.md` / `browser-firefox-mcp/README.md` 旧文
+「brp.json 合并进 dsh profile（bootstrap 已处理）」**不实**——dsh 不读
+`profile.json`/`brp.json`；真实面是 cordis.patch.yml + dsh-mcp-client（已改文档）。
 
 ### Phase 1 — CPA + dsh 设置进浏览器（3–5 天）
 
@@ -100,7 +110,7 @@ force 布局、悬浮面板、硬编码 token、会话切换遥控、Playwright�
 | 1.1 | 主线 `kokoa.mjs` CPA 区迁到本仓源码，`NetUtil`→8318 | 主线 F1 已验证 |
 | 1.2 | 迁 `/kokoa/dsh/settings` 白名单 UI | `dsh-settings.ts` |
 | 1.3 | 设置页补：dsh 状态、打开工作区、AI 分屏、并行会话上限 | 主线 pane + 本仓骨架合并 |
-| 1.4 | `ensure-dsh-cpa-provider` 并入启动器；CPA `managed:true`（避免 PUT 409） | 已有脚本 |
+| 1.4 | `ensure-dsh-cpa-provider` 并入启动器；CPA `managed:true`（避免 PUT 409）；**同脚本注入 BRP MCP** | 已有脚本 + 0.7 |
 | 1.5 | dsh 侧 CPA 卡片保持只读+跳转 | 已收口 |
 | 1.6 | 契约测试：设置控件 ↔ sidecar 路由 ↔ pref | 对齐 `test-native-settings-*` |
 
@@ -121,7 +131,7 @@ force 布局、悬浮面板、硬编码 token、会话切换遥控、Playwright�
 | 步骤 | 做什么 |
 |---|---|
 | 3.1 | 设置页「浏览器控制」：BRP 状态 / 截图 / 允许操控 |
-| 3.2 | 启动自检：无 lockfile → 一键拉起；扩展未装 → 引导 |
+| 3.2 | 启动自检：无 lockfile → 一键拉起（**已在 0.1**）；扩展未装 → 引导 |
 | 3.3 | `setControllable` 缺口：UI 明示；AI `tab.open` 路径保持可用 |
 | 3.4 | 侧栏第 2/3 步：接 `KokoaDshSessions` 会话列表（不遥控切换） |
 | 3.5 | 真机：navigate/snapshot/screenshot + 人工接管 |
@@ -139,7 +149,7 @@ force 布局、悬浮面板、硬编码 token、会话切换遥控、Playwright�
 
 | 里程碑 | 判据 |
 |---|---|
-| **M0** | 真机：无 401、8318 绿、lockfile 在、CPA 单一状态源 |
+| **M0** | 真机：无 401、8318 绿、lockfile 在、CPA 单一状态源、**dsh 已挂 brp MCP** |
 | **M1** | 设置页可完整管理 CPA + dsh 设置，不进 3080 |
 | **M2** | 首屏 = about:kokoa；文件树可用 |
 | **M3** | BRP 端到端 + 侧栏会话列表 |
@@ -169,7 +179,20 @@ flowchart TD
 
 ## 6. 本周顺序
 
-1. **Phase 0.1–0.5**：启动编排 + `brp.json` + 状态源  
-2. **真机**：`manual-test-checklist`  
+1. ~~**Phase 0.1–0.5**：启动编排 + `brp.json` + 状态源~~ ✅（+0.7 BRP MCP 注入）  
+2. **真机**：`manual-test-checklist`（M0 最后一勾）  
 3. **Phase 1**：CPA 设置迁入本仓源码  
 4. **并行**：更新 `remaining-to-done` / README（含多会话 AI 标签提交）  
+
+---
+
+## 7. 复核记录（2026-09-18）
+
+| 项 | 结论 |
+|---|---|
+| 两仓提交 | `kokoa-browser@fd95bcb`、`主线@8da8229`，均 ahead 2 未 push |
+| 运行时「全绿」 | 曾是瞬时快照（进程退出后 lock 僵尸）；**复测 `-NoLaunch` 已再次全绿** |
+| `dsh_token=missing` 矛盾 | 旧证据文件；复测 `ok validate=http-ok`，panel.url 与当前 dsh 一致 |
+| 产品无 `mcpServers.brp` | **属实且根因更深**：dsh 根本不读 profile.json/brp.json → 已改走 cordis `dsh-mcp-client` 注入（0.7） |
+| Phase 0.4 | 消费方已全指 8318，旧双源 UI 已删 → 视为完成 |
+| 僵尸 lock | `Get-BrpLock` 对 pid 死返回 null 并会重启；本次复测已换新 pid |  
