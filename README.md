@@ -22,21 +22,19 @@ Kokoa 是一款「AI 工作区与网页同级」的桌面客户端。此前它�
 ### 现在到哪了
 
 ```
-✅ 品牌名 = Kokoa（brand.ftl 五项全对，关于对话框已无 Zen 残留）
-✅ AI 工作区：6 个模块进了包（含 KokoaDshSessions），202 个单测对【产物里的模块】全过
-✅ 欢迎页大标题已删、新标签页 Zen logo 已隐藏
-✅ 主菜单可按 pref 配置（默认隐藏打印 / 登录 Firefox / 保存页面）
-✅ 构建核对全绿：35056127083 = 17/17；35069527609 = 18/18；35113050289 = 31/31
-✅ 实机验收第一轮完成（启动跳 GitHub / 默认浏览器弹窗 / 菜单 template 坑均已修）
-✅ dsh 0.1.5 接口查清（docs/dsh-0.1.5-interface.md）；【边界】外壳无法遥控 dsh 切会话
-✅ AI 工作区侧栏 MVP 第 1 步落地并过产物验证（35113050289：css/ftl 进包 + 挂载进 browser.xhtml）
-✅ CI 基线已升 Firefox 156.0：4 个 155 时代手写 patch 已按 156 文本重建（PR #3），
-   248 个 patch 离线批量探测全过
-⏳ 待实机：侧栏位置判据（不重叠 = 位置对）；第 2/3 步再接会话列表
-⏭  之后再说：侧栏第 2/3 步、branding 图标
+✅ 品牌名 = Kokoa（brand.ftl 全 locale zen=0；关于对话框无 Zen）
+✅ AI 工作区：6 个模块进包；单测对【产物模块】全过
+✅ 欢迎页 / 新标签 logo / 主菜单 pref 默认隐藏 3 项
+✅ 构建核对多轮全绿；设置面板 data-category 坑已修
+✅ 实机验收第一轮 + dsh 0.1.5 接口查清（外壳不能遥控切会话）
+✅ CI 基线 Firefox 156.0（PR #3 清完 155 时代 patch 债）
+✅ Phase 0 迁移完成：start-kokoa 编排 + 产品 BRP MCP（cordis insert）
+✅ M0 运行时自动化判据全过（acceptance-2026-09-18-phase0.md）
+⏳ 纯 UI 人工点检 + BRP 扩展 tab-list 重连（不挡 Phase 1）
+⏭  Phase 1：CPA/dsh 设置迁入本仓 → Phase 2 首页 → Phase 3 BRP 产品化
 ```
 
-**详见 `docs/remaining-to-done.md`。**
+**详见 `docs/remaining-to-done.md` · `docs/dsh-cpa-brp-migration-plan.md`。**
 
 ### 几条重要的约定（踩过坑才有的）
 
@@ -46,7 +44,8 @@ Kokoa 是一款「AI 工作区与网页同级」的桌面客户端。此前它�
 | 写测试 | `docs/testing-pitfalls.md` |
 | 判断某段 AI 逻辑要不要构建才能测 | `docs/ai-unit-test-boundary.md` |
 | 改 patch / png 等构建元数据 | `docs/build-metadata-conventions.md` |
-| 实机验收 | `docs/manual-test-checklist.md` |
+| 实机验收 | `docs/manual-test-checklist.md` · `docs/acceptance-2026-09-18-phase0.md` |
+| dsh/CPA/BRP 迁移 | `docs/dsh-cpa-brp-migration-plan.md` |
 
 ### 常用的两条命令
 

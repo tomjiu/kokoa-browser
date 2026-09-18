@@ -1,7 +1,8 @@
-# 距「初步完成」还差多少（2026-09-16 盘点）
+# 距「初步完成」还差多少（2026-09-18 更新）
 
 > 之前几份文档的「待办」散落各处、部分已过期。
-> 这一份是【重新核对过源码与产物】的现状。
+> 这一份是【重新核对过源码、产物与运行时】的现状。
+> 迁移主线另见 `dsh-cpa-brp-migration-plan.md` · 验收见 `acceptance-2026-09-18-phase0.md`。
 
 ---
 
@@ -9,89 +10,85 @@
 
 | 项 | 证据 |
 |---|---|
-| 品牌名 = Kokoa | 产物 brand.ftl：5 项全是 Kokoa |
-| 5 个 AI 模块进包 | 产物 `modules/zen/Kokoa*.mjs`（35056127083 核对，含新增 KokoaMenubar） |
-| 关于对话框无 Zen 残留 | 产物 aboutDialog.xhtml 里 zen 出现 **0** 次 |
-| 设置页 Kokoa 分类 | 产物 41 个 ftl + kokoa-settings.js |
-| AI 面板 / 分屏 / 会话绑定 | 源码已实现 |
-| 菜单可配置（默认隐藏 3 项） | 35056127083 产物：5 条 kokoa.menu.* pref 默认值内联进 firefox.js |
-| 欢迎页大标题 / 新标签页 logo | 35047911545 + 35056127083 均确认 |
-| 148 个单测 | 9 个测试文件全过；对 35056127083 产物里的模块跑也是 148/148 |
+| 品牌名 = Kokoa | 产物 brand.ftl：41 locale，kokoa=205 / zen=0；aboutDialog.xhtml zen=0 |
+| 6 个 AI 模块进包 | 产物 `modules/zen/Kokoa*.mjs`（35173069555 含 KokoaMenubar / KokoaDshSessions） |
+| 设置页 Kokoa 分类 | 产物 41 个 ftl + kokoa-settings.js；面板空白根因已修（`data-category`） |
+| AI 面板 / 分屏 / 会话绑定 | 源码已实现；设置页两按钮走同一路径 |
+| 菜单可配置（默认隐藏 3 项） | 产物 5 条 `kokoa.menu.*` pref；实机验收已过（b0962e7） |
+| 欢迎页 / 新标签 logo | `zen.welcome-screen.seen=true`；`activity-stream.hideLogo=true` |
+| 单测 | 197+ 用例；产物上重跑全过（多轮构建） |
+| pref 同名覆盖 | 已修 + `check.sh prefs-shadow` 守卫 |
+| **Phase 0 启动编排** | 主线 `start-kokoa.ps1`：brp-bridge + sidecar + dsh token + 证据文件 |
+| **产品 BRP MCP 注入** | `ensure-dsh-cpa-provider.ps1` cordis **insert** 形态；dsh 子进程 guarded→adapter 在 |
+| **M0 运行时自动化判据** | 见 `acceptance-2026-09-18-phase0.md`：token 200 / 8318 / lock / CPA managed+running / mcp-brp |
+| CPA 状态源统一 | 消费方全指 8318；旧双源控制条已删（`b92da05`） |
 
-# 二、★ 还差什么才算「初步完成」（2026-09-16 更新）
+# 二、★ 还差什么才算「初步完成」
 
-> 上一版写的是「等构建 35056127083」。
-> **那次已完成**（success，产物核对 17/17 + 产物单测 148/148 全绿），所以这一节重写。
+## 2.1 迁移主线（dsh/CPA/BRP → C 链）
 
-## 2.1 ⏳ 唯一的阻塞项:实机点一遍（构建已验证完）
+按 `dsh-cpa-brp-migration-plan.md`：
 
-**构建 35056127083 已完成（success，2026-09-16）**，产物核对全绿：
+| 阶段 | 状态 |
+|---|---|
+| **Phase 0** 一键起来 | ✅ 0.1–0.5、0.7 完成；0.6 纯 UI 点击项仍开放 |
+| **Phase 1** CPA/dsh 设置原生 | ⬜ 下一阶段（本仓已有设置骨架 + 主线 `kokoa.mjs` 待迁） |
+| Phase 2 首页/文件树 | ⬜ |
+| Phase 3 BRP 产品化 | ⬜（扩展 `tab-list-error` 仍开放） |
+| Phase 4 链收敛 | ⬜ |
 
-```bash
-# 1) 不用实机就能查的（17 项）—— 已做，17/17 全绿
-python scripts/check-artifact.py <产物目录>
-#    模块进包 5 个 + kokoa.menu.* pref 5 个 + 品牌名 5 项
-#    + 欢迎页已删 + hideLogo=true
+**M0 自动化面已过**；扩展侧重连 + 人工点 UI 是收尾项。
 
-# 2) 对着产物跑单测（验证打包没改变行为）—— 已做，148/148 全过
-bash scripts/verify-artifact-modules.sh <产物目录>
+## 2.2 只有人能做的（`manual-test-checklist.md`）
+
+```
+□ 点「AI 工作区」→ 复用标签
+□ 点「与网页并排」→ 左右分屏
+□ 设置 → Kokoa 切换/刷新内容仍在
+□ 三条杠：打印/登录/保存 默认不在；勾选立刻出现
+□ Ctrl+P 仍能打印
+□ 关于对话框显示 Kokoa Browser
+□ BRP 扩展重连后 navigate/snapshot
 ```
 
-详见 `docs/build-35056127083-verified.md`。
+自动化已旁证：首屏 about:kokoa、AI 按钮在、设置#kokoa 打开过、menu_init=ok、dsh token 200。
 
-**剩下【只有人能做】的部分**，照 `docs/manual-test-checklist.md` 实机点一遍:
-```
-· 点「AI 工作区」-> dsh 起来 -> 面板打开（带 token）
-· 再点一次 -> 复用标签，不再新开
-· 点「与网页并排」-> 左右分屏
-· 设置 -> Kokoa -> 菜单:勾选能改
-· 三条杠菜单:打印/登录/保存页面 默认【不在】
-· Ctrl+P 仍能打印（隐藏的是入口，不是能力）
-```
-
-**这一步之前，AI 工作区不能算「验证可用」** —— 单测覆盖了逻辑，
-但没覆盖「dsh 能否真被拉起」和「UI 真的长什么样」。
-
-## 2.2 已完成（有证据）
+## 2.3 已完成（有证据）— 历史项保留
 
 | 项 | 证据 |
 |---|---|
-| 品牌名 = Kokoa | 产物 brand.ftl 五项全对 |
-| 6 个模块进包 | 35032271818 / 35047911545 / 35056127083 / 35069527609 均确认（最新含 KokoaDshSessions） |
-| 关于对话框无 Zen 残留 | 产物里 zen 出现 0 次 |
-| 欢迎页大标题已删 | 35047911545 / 35056127083 均确认 |
-| 新标签页 hideLogo | 35047911545 / 35056127083 均确认 = true |
-| 菜单可配置 | 35056127083 确认：pref 默认值进包 + 产物模块 25 用例过；实机验收已过（b0962e7 修了菜单在 template 里的坑） |
-| dsh 接口三未知 | 已关闭（docs/dsh-0.1.5-interface.md + workitem-ai-panel-interface 第五节） |
-| 实机验收第一轮 | 完成（启动跳 GitHub / 默认浏览器弹窗 / 更新检查均已修，见 dfe54e1 等 8 提交） |
-| 单测 | 197 个用例 / 10 个文件全过；产物上重跑 197/197（构建 35069527609，check-artifact 18/18） |
-| 应用内品牌 logo 清理 | 2026-09-17 去掉 `about:keyboard` 侧栏 + 配置文件选择器的字标（2 个 patch，均过 `preflight-patches.py` 真 `git apply --check`：2 通过 / 0 失败 / 0 跳过）；产物级新增 2 项断言。39 处品牌引用的逐条分类（去了 2、保留 26、关掉 7、查过没改 2）见 `docs/branding-removal.md`，复扫用 `scripts/scan-branding-refs.py`。**产物确认待构建 `35165650008`（`a581869`）** —— 本项在 `987e3bf` 的产物里仍是 FAIL（那是预期的：patch 更晚） |
-| 设置页 Kokoa 面板空白/闪烁 | **根因已定位并修，且已在产物里证实**（template 顶层节点漏写 `data-category`，于是被 preferences.js 的 `search()` 立刻隐藏）。机制见 `docs/settings-pane-mechanism.md`；守卫：`check.sh panes` + `check-artifact.py` 第 7 项。**产物证据：构建 `35164347415`（`987e3bf`）该项 OK**，而旧产物 `35096636452` 精确报 `FAIL 3 个顶层节点漏/错: hbox,groupbox,groupbox` —— 见 `docs/build-35164347415-verified.md` |
-| pref 同名覆盖（欢迎页没被真正关掉） | **根因已定位并修**（`prefs/zen/welcome.yaml` 与 `prefs/kokoa/branding-behavior.yaml` 同名，ffprefs 按名稳定排序 + 目录序 → 我们的必输；`@cond` 在 official 构建里展开成 false）。修法：改到权威位置 + 删 4 条重复；守卫 `check.sh prefs-shadow`；**本地用真 ffprefs 生成器 A/B 验证**（修前 3 条 → 修后 1 条 true）。产物确认待构建 `35173069555`（`23c6d2f`） |
+| dsh 接口三未知 | 已关闭（dsh-0.1.5-interface.md） |
+| 实机验收第一轮 | 完成（dfe54e1 等 8 提交） |
+| 品牌 logo 清理 | branding-removal.md + scan-branding-refs.py |
+| 设置面板空白/闪烁 | settings-pane-mechanism.md；产物 35164347415 OK |
+| 156.0 patch 债 | PR #3 已清；248 patch 离线探测全过 |
 
 # 三、之后再说（不阻塞）
 
 | 项 | 说明 |
 |---|---|
-| AI 工作区侧栏第 2/3 步 | **第 1 步（最小可见）已落地并过产物验证**（35113050289：侧栏 css/ftl 进包 + 挂载进 browser.xhtml，31/31）；2026-09-17 起产物检查扩到 5 项（多了样式表/本地化 `<link>`，并修掉一个「DOM 没挂也能通过」的假 PASS）；待实机确认 include 位置后接 KokoaDshSessions（49 用例）做会话列表 UI |
-| branding 图标 | 应用**图标**现在还是 Zen/Firefox 的图（需要美术，未做）；应用**内部**的 logo 已清理数批：a4d5333 / cbda640 / f61ed9e，2026-09-17 又去掉 `about:keyboard` 侧栏与配置文件选择器的字标（判据+完整分类+保留清单见 `docs/branding-removal.md`） |
-| dsh 会话切换 | **已查清：做不到**。当前会话是 dsh 页面本地状态，无 URL 路由、无外部触发通道（dsh-0.1.5-interface.md）；产品形态改为【列表展示 + 引导用户在 dsh 内切换】，强需则向 dsh 上游提 deep-link |
-| release 流水线的 zen-browser/* 引用 | 真做发布时才需要 |
+| 侧栏第 2/3 步 | 第 1 步已过产物验证；接 KokoaDshSessions 做会话列表（Phase 3.4） |
+| branding 图标 | 应用图标仍是 Zen/Firefox（需美术） |
+| dsh 会话外部切换 | 做不到（无 deep-link）；列表展示 + 引导内切 |
+| release 流水线 zen-browser/* | 真做发布时再清 |
 
 # 四、一句话
 
-**AI 工作区主线：代码层验证全部闭环（35056127083 = 17/17+148/148；35069527609 = 18/18+197/197；35113050289 = 31/31+202/202 含侧栏），实机验收第一轮已完成；侧栏 MVP 第 1 步已过产物验证，待实机看位置。**
-侧栏位置确认后接会话列表，主线就算初步完成。
+**代码层与 M0 运行时自动化判据已闭环（Phase 0 完成 + BRP MCP 进 dsh）；
+剩纯 UI 人工点检与 BRP 扩展重连，然后进 Phase 1（CPA/dsh 设置迁入本仓）。**
 
-# 五、★ 基线升级遗留：156.0 patch 债（PR #3 已清）
+# 五、基线升级遗留：156.0 patch 债（PR #3 已清）
 
-surfer.json candidate=156.0 生效后 CI 基线已升级 Firefox 156.0，但一批 155 时代
-手写的 patch（空行分隔 hunk + 行号乱序 + 上下文漂移）从未在 156 上验证过，
-在 PR #3 的构建里逐个引爆（aboutDialog / preferences-js / uninstaller-nsi /
-aboutPrivateBrowsing 四个），已全部按「语义不变、156 实际文本重新定位」重建。
+上游升级（改 candidate）后，先跑离线批量探测（248 patch × 原版 `git apply --check`），
+再排构建。jar.mn 纯 CSS 条目不要加 `*` 前缀。
 
-**给后续的经验**：上游升级（改 candidate）后，先跑离线批量探测
-（PR #3 用的方法：248 个 patch × 156 原版逐个 git apply --check，同文件多 patch
-按 Import 顺序串行），再排构建 —— 省得 2h/轮地撞墙。
-另外 jar.mn 纯 CSS 条目不要加 * 前缀（* 会要求文件里有 % 指令，否则
-jar_maker 报 'no preprocessor directives found'）。
+# 六、相关提交（2026-09-18 晚）
+
+| 仓 | 提交 | 内容 |
+|---|---|---|
+| 主线 | `42e616c` | BRP MCP insert 注入 + 文档勘误 |
+| 主线 | `8da8229` | Phase 0 启动编排 |
+| 本仓 | `65ad421` | Phase 0 复核 + 验收记录 |
+| 本仓 | `fd95bcb` | 迁移计划 |
+
+两仓均 ahead 3，**未 push**。

@@ -2,6 +2,10 @@
 
 > 单测覆盖了 94 个用例，但以下这些**测不了**（要真进程 / 真 UI）。
 > 构建产物出来后，照这份清单逐条点，记录结果。
+>
+> **2026-09-18 自动化旁证**见 `acceptance-2026-09-18-phase0.md`：
+> 运行时 M0 判据、产物 pref/模块/品牌、GUI shell 证据已勾；
+> 下列纯 UI 点击项仍需人眼确认。
 
 ---
 
@@ -143,6 +147,20 @@ kokoa.menu.save-file.visible   = false    <- 默认隐藏
 
 每条目打勾或写「失败 + 控制台原文」。
 **失败时不要猜** —— 把 `[Kokoa` 开头的日志原样贴出来。
+
+**2026-09-18 部分结果**（详见 `acceptance-2026-09-18-phase0.md`）：
+
+```
+[x] 零之二 menu pref 5 条（产物）
+[x] dsh 带 token HTTP 200（非 authentication required）
+[x] 首屏 about:kokoa；AI 按钮在侧栏顶；设置#kokoa 打开过
+[x] menu_init=ok；product_defaults applied；welcome_seen=true
+[ ] 1.2/1.3 点 AI 工作区复用标签（人点）
+[ ] 1.4 分屏（人点）
+[ ] 2.1–2.3 菜单勾选 / Ctrl+P（人点）
+[ ] 三 关于对话框文案（人点）
+[ ] BRP 扩展 tab.list（扩展侧重连后）
+```
 
 ---
 
