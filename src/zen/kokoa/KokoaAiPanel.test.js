@@ -22,7 +22,7 @@
  * 而且浏览器 API 都在【函数体内】，不在顶层，所以 Node 能 import。
  */
 
-import { urlBase, hasToken } from "./KokoaAiPanel.mjs";
+import { urlBase, hasToken, tabIdentity, sessionFrag } from "./KokoaAiPanel.mjs";
 
 let pass = 0;
 let fail = 0;
@@ -81,6 +81,16 @@ eq("假 token（tokenx=）", hasToken("http://x/?tokenx=1"), false);
 eq("片段里有 token 字样但不带 =", hasToken("http://x/#token"), false);
 eq("空字符串", hasToken(""), false);
 eq("undefined", hasToken(undefined), false);
+
+console.log("");
+console.log("=== tabIdentity / sessionFrag ===");
+console.log("");
+
+eq("无 fragment → default", tabIdentity("http://x/"), "default");
+eq("session 优先", tabIdentity("http://x/#kokoa-session=s1&kokoa-ws=w1"), "s1");
+eq("仅有 ws", tabIdentity("http://x/#kokoa-ws=w1"), "w1");
+eq("sessionFrag", sessionFrag("session-abc"), "#kokoa-session=session-abc");
+eq("sessionFrag 空", sessionFrag(null), "");
 
 console.log("");
 console.log("=== 结果: " + pass + " 通过 / " + fail + " 失败 ===");

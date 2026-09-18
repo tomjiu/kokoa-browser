@@ -76,8 +76,10 @@ ok("channel 常量是 /api", API_CHANNEL === "/api");
 console.log("=== buildEnvelope ===");
 
 eq("envelope 形状", buildEnvelope("session/list", {}, "rpc-1"),
-   { type: "client-request", rpcId: "rpc-1", method: "session/list", payload: {} });
-eq("payload 缺省给空对象", buildEnvelope("session/list").payload, {});
+   { type: "client-request", rpcId: "rpc-1", method: "session/list",
+     payload: { args: { _request: {} } } });
+eq("payload 缺省给 gateway 形态", buildEnvelope("session/list").payload,
+   { args: { _request: {} } });
 
 ok("端点常量", EP_SESSION_LIST === "session/list" && EP_SESSION_EXPORT === "session.export");
 ok("type 常量", TYPE_REQUEST === "client-request" && TYPE_RESPONSE === "server-response");
@@ -207,7 +209,8 @@ function jsonResp(status, body) {
      { url: "http://127.0.0.1:18318/api/session/list", method: "POST" });
   const sent = JSON.parse(f.calls[1].init.body);
   eq("发出去的 envelope", sent,
-     { type: "client-request", rpcId: "RID", method: "session/list", payload: { cursor: undefined } });
+     { type: "client-request", rpcId: "RID", method: "session/list",
+       payload: { args: { _request: { cursor: undefined } } } });
   ok("content-type 是 json", f.calls[1].init.headers["content-type"] === "application/json");
 }
 
@@ -218,7 +221,8 @@ function jsonResp(status, body) {
     () => jsonResp(200, { type: "server-response", rpcId: "R", result: { ok: true, value: { items: [] } } }),
   ]);
   await fetchSessionList(PANEL, { fetchImpl: f.fetchImpl, rpcIdFactory: () => "R", cursor: "off-10" });
-  eq("cursor 进 payload", JSON.parse(f.calls[1].init.body).payload, { cursor: "off-10" });
+  eq("cursor 进 payload", JSON.parse(f.calls[1].init.body).payload,
+     { args: { _request: { cursor: "off-10" } } });
 }
 
 // 6.3 交换 401 -> 人话错误

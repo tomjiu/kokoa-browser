@@ -128,7 +128,16 @@ export function rpcUrl(origin, endpoint) {
  * @returns {{type: string, rpcId: string, method: string, payload: object}}
  */
 export function buildEnvelope(method, payload, rpcId) {
-  return { type: TYPE_REQUEST, rpcId, method, payload: payload ?? {} };
+  // dsh gateway（2026-09-18 实测）：payload 必须形如 { args: { _request: … } }。
+  // 裸对象（含 {}）自动包装；已是 {args} 形态则透传。
+  let wire = payload;
+  if (!wire || typeof wire !== "object") {
+    wire = { args: { _request: {} } };
+  } else if (!("args" in wire)) {
+    const request = Object.keys(wire).length ? wire : {};
+    wire = { args: { _request: request } };
+  }
+  return { type: TYPE_REQUEST, rpcId, method, payload: wire };
 }
 
 /**

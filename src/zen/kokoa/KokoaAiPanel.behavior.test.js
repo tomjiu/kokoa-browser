@@ -33,15 +33,25 @@
 globalThis.Services = {
   env: { get: () => "" },
   scriptSecurityManager: { getSystemPrincipal: () => ({ SYS: true }) },
+  prefs: {
+    getIntPref: (name, def) => (name === "kokoa.ai.maxParallel" ? 4 : def),
+  },
 };
 globalThis.ChromeUtils = { importESModule: () => ({ FileUtils: {} }) };
 
 /** @type {{gZenViewSplitter: object|null}} */
 globalThis.window = { gZenViewSplitter: null };
 
-const { urlBase, hasToken, findAiTab, openAiTab } = await import(
-  "./KokoaAiPanel.mjs"
-);
+const {
+  urlBase,
+  hasToken,
+  findAiTab,
+  openAiTab,
+  openAiSessionTab,
+  tabIdentity,
+  sessionFrag,
+  listAiTabs,
+} = await import("./KokoaAiPanel.mjs");
 const {
   isSplitActive,
   isAiInSplit,
@@ -96,13 +106,37 @@ const PANEL = "http://127.0.0.1:3080/";
   ok("① 新建的标签被选中", w._gb.selectedTab === r.tab);
 }
 
-// ② 已有 AI 标签（带 #kokoa-ws=）-> 复用，不再新建
+// ② 已有 AI 标签（带 #kokoa-ws=）-> 打开 default 时回退复用已有 AI 标签
 {
   const w = fakeWin([{ url: PANEL + "#kokoa-ws=abc" }]);
   const before = w._gb.tabs.length;
   const r = openAiTab(w);
   ok("② 已有 AI 标签时【复用】", r.reused === true);
   ok("② 复用时没有新增标签", w._gb.tabs.length === before);
+}
+
+// ②b 不同会话身份 → 并行新标签，不复用
+{
+  const w = fakeWin([
+    { url: PANEL + "#kokoa-session=session-aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee" },
+  ]);
+  const before = w._gb.tabs.length;
+  const r = openAiSessionTab(w, "session-11111111-2222-3333-4444-555555555555");
+  ok("②b 不同会话【新开标签】", r.reused === false);
+  ok("②b 标签数 +1", w._gb.tabs.length === before + 1);
+  ok("②b URL 带 kokoa-session", r.url.includes("#kokoa-session=session-11111111-2222-3333-4444-555555555555"), r.url);
+}
+
+// ②c 同一会话再次打开 → 复用
+{
+  const w = fakeWin([
+    { url: PANEL + "#kokoa-session=session-aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee" },
+    { url: PANEL + "#kokoa-session=session-11111111-2222-3333-4444-555555555555" },
+  ]);
+  const before = w._gb.tabs.length;
+  const r = openAiSessionTab(w, "session-aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
+  ok("②c 同一会话【复用】", r.reused === true);
+  ok("②c 不再新建", w._gb.tabs.length === before);
 }
 
 // ③ ★ 带 ?token= 的 URL 也要能认出是同一个面板（主线踩过）
@@ -141,6 +175,14 @@ console.log("=== 二、URL 工具 ===");
 console.log("");
 
 ok("urlBase 切掉 ? 与 #", urlBase("http://a/?token=1#ws=2") === "http://a/");
+ok("tabIdentity 默认 default", tabIdentity("http://a/?token=1") === "default");
+ok("tabIdentity 认 kokoa-session",
+   tabIdentity(PANEL + "#kokoa-session=session-xyz") === "session-xyz");
+ok("tabIdentity 认 kokoa-ws", tabIdentity(PANEL + "#kokoa-ws=w1") === "w1");
+ok("sessionFrag 空 id → 空串", sessionFrag("") === "");
+ok("sessionFrag 形态", sessionFrag("session-a") === "#kokoa-session=session-a");
+ok("listAiTabs 只收 panel origin",
+   listAiTabs(fakeWin([{ url: PANEL }, { url: "https://x.com/" }])).length === 1);
 ok("hasToken 认 ?token=", hasToken("http://a/?token=1") === true);
 ok("hasToken 认 &token=", hasToken("http://a/?x=1&token=2") === true);
 ok("hasToken 不认没有 token 的", hasToken("http://a/") === false);
