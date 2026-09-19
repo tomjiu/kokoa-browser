@@ -34,10 +34,27 @@
     npm i -D esbuild@<与 cpa-settings 相同的版本> typescript
     npm i    @excalidraw/excalidraw   # MIT（已核）
 
-⚠️ **体积与许可**：Excalidraw 及其依赖（roughjs / jotai / …）合计不小。产物进包前先量一次
-`lib/canvas.js` 的体积（参考：主线的 `kokoa-browser-panel/lib/client.js` 是几 KB 级；
-Excalidraw 会是 **数百 KB~1MB 级**）。如果超出可接受范围，备选：
-① 懒加载（首次打开 `about:canvas` 才拉）② 换更小的白板库（tldraw 许可要再核）。
+### ⚠️ 体积与许可：**已实测**（2026-09-19，本机 npm + esbuild 0.28.2）
+
+| 方案 | 打包后（minify，未 gzip） | 许可 | 说明 |
+|---|---|---|---|
+| **Excalidraw 0.18.1** | **8204 KB** | **MIT** ✅ | 装 45.3 MB；场景=JSON 元素数组；带 mermaid 转换 |
+| tldraw 2.4.6 | 未量（依赖 `@tldraw/editor` 5.2 MB 等，量级相当） | ⚠️ **非 MIT**（`SEE LICENSE IN LICENSE.md`，含商业条款） | 先用许可这一条否掉 |
+| 自绘 + `perfect-freehand` | 笔迹原语 **4 KB** | MIT | 只解决"笔迹平滑"，其余（选中/拖动/undo/文本/导出）都要自己写 |
+
+**结论（改写了原计划）**：8.2 MB 打进浏览器包是**不可接受**的（fork 的 `omni.ja` 约 97 MB，
+再加 8 MB ≈ +8%，且每次开画布都要解析这么大一坨）。
+**所以第 2 步改为**：
+
+1. **懒加载**：Excalidraw 产物**不进 `omni.ja`**，放在磁盘上（或由本地服务提供），
+   首次打开 `about:canvas` 时才载入；之后走内存缓存。
+2. 若懒加载仍不合适（例如要求"完全离线、单文件"），退到 **自绘 + `perfect-freehand`**：
+   代价是要自己写 UI（选中/拖动/undo/文本/导出），但体积从 8.2 MB 降到 KB 级。
+   **场景级 API（第 3 步）与选哪个渲染层无关** —— 这正是先把契约定下来的价值：
+   换渲染层不影响 AI 通道。
+
+> 决策建议：**先按懒加载做 Excalidraw**（MIT、功能全、AI 场景 JSON 友好），
+> 把体积问题交给"不进包"解决；只有当"必须单文件离线"成为硬约束时，才考虑自绘。
 
 ## 3. 桥接：Excalidraw ⇄ KokoaCanvasScene
 
