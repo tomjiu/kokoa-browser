@@ -99,6 +99,55 @@
     say("场景模块加载失败：" + e);
   }
 
+  // ── 渲染层懒加载（第 2 步）──────────────────────────────────────────────
+  // 渲染层产物（Excalidraw，约 8.4MB）**不在包里**，由状态桥托管：
+  //   GET http://127.0.0.1:<桥端口>/kokoa/canvas/canvas.js
+  // 首次打开本页时才拉它；拉到后调它导出的 __kokoaCanvasMount(container)。
+  //
+  // 【为什么走桥而不是 chrome://】包内没有多余位置可放（browser/ 下只有 components
+  //   与 VisualElements），而桥已经在本机跑、已有 Host/Origin 校验、本页同源可控。
+  // 【失败不是致命的】拉不到就退回第 1 步的极简渲染（场景 API 照常可用）——
+  //   AI 的通道不依赖它，人看到的只是"没有好看的画布"。
+  const RENDERER_STATE = { loaded: false, error: null };
+  function bridgeBase() {
+    try {
+      const raw = String(ChromeUtils.importESModule(
+        "resource://gre/modules/Services.sys.mjs", { global: "current" }
+      ).Services.env.get("KOKOA_BRIDGE_PORT") || "");
+      const n = parseInt(raw, 10);
+      if (Number.isInteger(n) && n > 0 && n <= 65535) {
+        return "http://127.0.0.1:" + n;
+      }
+    } catch (e) { /* 拿不到就用默认 */ }
+    return "http://127.0.0.1:8318";
+  }
+  function loadRenderer() {
+    return new Promise((resolve) => {
+      const s = document.createElement("script");
+      s.src = bridgeBase() + "/kokoa/canvas/canvas.js";
+      s.onload = () => {
+        RENDERER_STATE.loaded = true;
+        say("渲染层已载入");
+        try {
+          if (typeof window.__kokoaCanvasMount === "function") {
+            window.__kokoaCanvasMount(document.getElementById("placeholder"), { mode: state.mode });
+          }
+        } catch (e) { /* 挂载失败退回极简 */ }
+        resolve(true);
+      };
+      s.onerror = () => {
+        RENDERER_STATE.error = "load-failed";
+        say("渲染层未载入（回退极简显示；场景 API 仍可用）");
+        resolve(false);
+      };
+      document.head.appendChild(s);
+    });
+  }
+  // 不阻塞场景 API：先让 AI 通道可用，再去拉渲染层。
+  if (scene) {
+    loadRenderer();
+  }
+
   // ── 对外接口 ─────────────────────────────────────────────────────────────
   window.__kokoaCanvas = scene;
   window.__kokoaCanvasState = function () {
@@ -109,6 +158,7 @@
       elements: state.elements.length,
       undoUnits: state.undo.length,
       hasScene: Boolean(scene),
+      renderer: { loaded: RENDERER_STATE.loaded, error: RENDERER_STATE.error },
     };
   };
 
