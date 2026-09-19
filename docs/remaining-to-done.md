@@ -34,7 +34,7 @@
 | **Phase 0** 一键起来 | ✅ 0.1–0.5、0.7 完成；0.6 纯 UI 点击项仍开放 |
 | **Phase 1** CPA/dsh 设置原生 | 🟡 **代码已迁完（2026-09-19）**：设置页三个分类（Kokoa / Kokoa dsh / Kokoa CPA）现由本仓自持（`config/kokoa.mjs` + 三个 pane 注册 + 66 条 ftl + `KokoaShellApi.mjs`），旧 XUL 骨架退役；本仓 check.sh 全绿、新增 31 条单测、产物校验对现有产物 38/38。**剩**：本仓排构建验证 + 主线删掉 overlay 注入段（Step B，见 `phase1-settings-pane-migration.md`） |
 | Phase 2 首页/文件树 | ⬜ |
-| Phase 3 BRP 产品化 | ⬜（扩展 `tab-list-error` 仍开放） |
+| **Phase 3** BRP 产品化 | 🟡 **3.1 完成（2026-09-19）**：设置页「浏览器控制」组（BRP 状态 / 截图 / 由人授权操控，人工同意链 + 文案如实性有单测）。剩 3.2（扩展未装引导）/ 3.4（侧栏会话列表）/ 3.5（真机 navigate·snapshot·screenshot）；扩展 `tab-list-error` 仍开放 |
 | Phase 4 链收敛 | ⬜ |
 
 **M0 自动化面已过**；扩展侧重连 + 人工点 UI 是收尾项。
