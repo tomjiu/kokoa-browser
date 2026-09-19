@@ -1,3 +1,14 @@
+> ## ⛔ 本仓已停止构建（2026-09-19）—— 路线变了
+>
+> 本仓（Zen 源码分支）**不再是产品路线**。新路线：**官方 Firefox ESR 固定 runtime +
+> `-app` 挂载自持 `app-shell`**，改 UI **零编译**。
+> 本仓成果**已归档不删**：分支 + tag `archive/zen-fork-2026-09-19`（`0f3a69b`）。
+>
+> 完整方向与理由（在主仓 `tomjiu/kokoa`）：`docs/direction-2026-09-19.md`、ADR-020 / ADR-021。
+> **本文保留作历史与对照，不要照它继续做。**
+
+> ⚠️ 本文的实施对象（Firefox preferences 面板迁移）**整体作废**——它就是「改 Firefox 前端」的典型，新架构下不需要。
+
 # Phase 1 —— 设置页所有权从主线 overlay 迁回本仓（2026-09-19）
 
 > 关联：`dsh-cpa-brp-migration-plan.md` Phase 1 · `remaining-to-done.md` · 主线

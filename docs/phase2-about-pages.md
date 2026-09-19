@@ -1,3 +1,14 @@
+> ## ⛔ 本仓已停止构建（2026-09-19）—— 路线变了
+>
+> 本仓（Zen 源码分支）**不再是产品路线**。新路线：**官方 Firefox ESR 固定 runtime +
+> `-app` 挂载自持 `app-shell`**，改 UI **零编译**。
+> 本仓成果**已归档不删**：分支 + tag `archive/zen-fork-2026-09-19`（`0f3a69b`）。
+>
+> 完整方向与理由（在主仓 `tomjiu/kokoa`）：`docs/direction-2026-09-19.md`、ADR-020 / ADR-021。
+> **本文保留作历史与对照，不要照它继续做。**
+
+> ⚠️ 本文的 `about:` 页**注册机制作废**；但页面本身是纯网页，属**保留资产**（canvas 已搬入主仓 `packages/kokoa-canvas/`）。
+
 # Phase 2 —— 门面与首页（进行中，2026-09-19 起）
 
 > 计划出处：`dsh-cpa-brp-migration-plan.md` Phase 2（2.1–2.5）
