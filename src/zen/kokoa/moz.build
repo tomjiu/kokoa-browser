@@ -22,6 +22,7 @@
 #   · 我们这几个是纯逻辑（拿 URL / 找标签 / 拉起 dsh / 分屏），放 modules 更合适
 
 EXTRA_JS_MODULES.zen += [
+    "KokoaAboutPages.mjs",
     "KokoaAiPanel.mjs",
     "KokoaAiSplit.mjs",
     "KokoaDshSessions.mjs",

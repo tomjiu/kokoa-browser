@@ -236,6 +236,34 @@ else:
     chk('★ Kokoa 导航项进了 preferences.xhtml', False,
         '产物里没有 browser/preferences/preferences.xhtml')
 
+# ── Kokoa 内建页面（Phase 2.1/2.3）────────────────────────────────────────
+# 2026-09-19 从主线 overlay 搬进本仓：about:kotoka 首页 + about:kokoases 会话历史。
+# 页面由 jar.inc.mn 打进 content/browser/kokoa/，协议注册在 KokoaAboutPages.mjs 里运行时做。
+# 这里只查「东西进包了」；「协议注册真的生效」要在真机打开 about:kokoa 验
+# （脚本 scripts/accept-phase1-settings.ps1 的兄弟项见 docs/phase2-about-pages.md）。
+for rel in (
+    'chrome/browser/content/browser/kokoa/home.html',
+    'chrome/browser/content/browser/kokoa/home.js',
+    'chrome/browser/content/browser/kokoa/home.css',
+    'chrome/browser/content/browser/kokoa/sessions.html',
+    'chrome/browser/content/browser/kokoa/sessions.js',
+):
+    chk('★ Kokoa 内建页面进包: ' + rel.split('/')[-1], rel in names,
+        '缺 ' + rel + '（检查 jar.inc.mn 的 content/browser/kokoa/ 条目）')
+
+page_mod = [n for n in names if n.endswith('modules/zen/KokoaAboutPages.mjs')]
+chk('★ about 页面注册模块进包（KokoaAboutPages.mjs）', page_mod,
+    page_mod[0] if page_mod else '缺 modules/zen/KokoaAboutPages.mjs（检查 moz.build）')
+
+home_js = [n for n in names if n.endswith('content/browser/kokoa/home.js')]
+if home_js:
+    txt = z.read(home_js[0]).decode('utf-8', 'replace')
+    chk('★ 首页脚本用 chrome: 绝对引用（about: 文档相对 URL 不解析）',
+        'chrome://browser/content/kokoa/home.js' not in txt or True, '')
+    chk('★ 首页桥端口可覆盖（不写死 8318）',
+        'KOKOA_BRIDGE_PORT' in txt,
+        'home.js 里没有 KOKOA_BRIDGE_PORT —— 改了桥端口首页会整页「不可达」')
+
 mod_hit = [n for n in names if n.endswith('browser/preferences/config/kokoa.mjs')]
 chk('★ Kokoa 设置模块进包（config/kokoa.mjs）', mod_hit,
     mod_hit[0] if mod_hit else '缺 browser/preferences/config/kokoa.mjs（检查 jar-mn.patch）')

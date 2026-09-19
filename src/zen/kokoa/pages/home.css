@@ -1,0 +1,229 @@
+/* Kokoa 首页样式 —— 与 theme.css 的设计变量统一。
+ *
+ * 原则：只用 --kokoa-* 变量，不硬编码颜色。
+ * 变量定义在 theme.css（通过 browser.xhtml 注入），本文件只消费。
+ * 若变量未加载（如单独打开本文件），回退到系统色。
+ */
+
+:root {
+  color-scheme: light dark;
+  /* 回退值 = theme.css 的亮色变量，确保单独打开时也可用 */
+  --kokoa-accent: #4a7fd4;
+  --kokoa-accent-soft: rgba(74, 127, 212, 0.12);
+  --kokoa-bg-chrome: #f5f6f8;
+  --kokoa-bg-surface: #ffffff;
+  --kokoa-bg-elevated: #eef0f4;
+  --kokoa-text-primary: #1a1d23;
+  --kokoa-text-secondary: #5c6270;
+  --kokoa-text-muted: #8b909c;
+  --kokoa-border: rgba(0, 0, 0, 0.06);
+  --kokoa-border-strong: rgba(0, 0, 0, 0.1);
+  --kokoa-radius-sm: 6px;
+  --kokoa-radius-md: 8px;
+  --kokoa-radius-lg: 10px;
+  --kokoa-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --kokoa-shadow-md: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --kokoa-accent: #6b9eef;
+    --kokoa-accent-soft: rgba(107, 158, 239, 0.15);
+    --kokoa-bg-chrome: #1e2128;
+    --kokoa-bg-surface: #252830;
+    --kokoa-bg-elevated: #2c303a;
+    --kokoa-text-primary: #e8eaed;
+    --kokoa-text-secondary: #9aa0ac;
+    --kokoa-text-muted: #6b7280;
+    --kokoa-border: rgba(255, 255, 255, 0.06);
+    --kokoa-border-strong: rgba(255, 255, 255, 0.1);
+    --kokoa-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+    --kokoa-shadow-md: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 32px 40px;
+  font: 14px/1.55 system-ui, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+  background: var(--kokoa-bg-chrome);
+  color: var(--kokoa-text-primary);
+}
+
+/* ── 头部 ── */
+.hd {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.brand {
+  font-size: 22px;
+  font-weight: 650;
+  letter-spacing: .2px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--kokoa-text-primary);
+}
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--kokoa-accent);
+  display: inline-block;
+}
+.sub {
+  color: var(--kokoa-text-muted);
+}
+
+/* ── 主体网格 ── */
+main {
+  display: grid;
+  gap: 16px;
+  max-width: 780px;
+}
+
+/* ── 卡片 ── */
+.card {
+  background: var(--kokoa-bg-surface);
+  border: 1px solid var(--kokoa-border);
+  border-radius: var(--kokoa-radius-lg);
+  padding: 16px 18px;
+  box-shadow: var(--kokoa-shadow-sm);
+}
+.card h2 {
+  margin: 0 0 10px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--kokoa-text-primary);
+}
+.card-hd {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.card-hd h2 { margin-bottom: 10px; }
+
+.muted {
+  color: var(--kokoa-text-muted);
+  margin: 0;
+}
+
+.linkish {
+  color: var(--kokoa-accent);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* ── 键值对 ── */
+.kv {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 6px 12px;
+  margin: 0;
+}
+.kv dt { color: var(--kokoa-text-secondary); }
+.kv dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  color: var(--kokoa-text-primary);
+}
+
+/* ── 按钮行 ── */
+.row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+button {
+  font: inherit;
+  padding: 7px 13px;
+  border-radius: var(--kokoa-radius-md);
+  cursor: pointer;
+  border: 1px solid var(--kokoa-border-strong);
+  background: var(--kokoa-bg-surface);
+  color: var(--kokoa-text-primary);
+  transition: background-color 0.12s ease, border-color 0.12s ease;
+}
+button:hover {
+  border-color: var(--kokoa-accent);
+  background: var(--kokoa-accent-soft);
+}
+button.ghost {
+  padding: 3px 10px;
+  font-size: 12px;
+  color: var(--kokoa-text-secondary);
+}
+
+/* ── 工作区列表 ── */
+.ws {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.ws li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--kokoa-radius-md);
+  background: var(--kokoa-bg-elevated);
+  transition: background-color 0.12s ease;
+}
+.ws li:hover {
+  background: var(--kokoa-accent-soft);
+}
+.ws .grow { flex: 1; min-width: 0; }
+.ws .name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: var(--kokoa-text-primary);
+}
+.ws .meta {
+  color: var(--kokoa-text-muted);
+  font-size: 12px;
+  margin-top: 3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ws .sid {
+  font-family: ui-monospace, Consolas, monospace;
+  color: var(--kokoa-text-secondary);
+}
+
+.tag {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 1px 7px;
+  border-radius: 999px;
+  border: 1px solid var(--kokoa-border-strong);
+  color: var(--kokoa-text-secondary);
+}
+.tag.open {
+  border-color: var(--kokoa-accent);
+  color: var(--kokoa-accent);
+  background: var(--kokoa-accent-soft);
+}
+
+/* ── 提示与来源 ── */
+.hint {
+  margin: 10px 0 0;
+  min-height: 1.3em;
+  font-size: 12px;
+  color: var(--kokoa-text-secondary);
+}
+.src {
+  margin: 6px 0 0;
+  font-size: 11px;
+  color: var(--kokoa-text-muted);
+  word-break: break-all;
+}

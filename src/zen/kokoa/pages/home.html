@@ -1,0 +1,85 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Kokoa</title>
+  <!-- ★ 必须用绝对 chrome:// URL：本页是 about:kokoa 文档，相对 URL 不解析 ——
+       console 原文「'src' attribute of <script> element is not a valid URI: "home.js"」。
+       同理 about: 文档的默认 CSP 是 script-src chrome: resource: moz-src:（禁内联脚本），
+       所以脚本只能走外部 chrome: 文件，内联 <script> 会被 CSP 拦掉。 -->
+  <link rel="stylesheet" href="chrome://browser/content/kokoa/home.css" />
+</head>
+<body>
+  <header class="hd">
+    <div class="brand"><span class="dot"></span> Kokoa</div>
+    <div class="sub" id="sub">应用首页</div>
+  </header>
+
+  <main>
+    <section class="card">
+      <div class="card-hd">
+        <h2>工作区</h2>
+        <button id="ws-refresh" class="ghost">刷新</button>
+      </div>
+      <p class="muted" id="ws-empty">还没有工作区。用工具栏的 <b>AI</b> 按钮（Ctrl+Shift+K）把 AI 工作区与当前网页并排。</p>
+      <ul class="ws" id="ws-list"></ul>
+      <p class="hint" id="ws-msg"></p>
+      <p class="src" id="ws-src">数据源：读取中…</p>
+    </section>
+
+    <section class="card">
+      <h2>状态</h2>
+      <dl class="kv">
+        <dt>状态桥</dt><dd id="k-bridge">检测中…</dd>
+        <dt>浏览器模式</dt><dd id="k-mode">—</dd>
+        <dt>CPA</dt><dd id="k-cpa" class="linkish" title="打开 CPA 设置页">检测中…</dd>
+        <dt>Agents</dt><dd id="k-agents">—</dd>
+        <dt>Jobs</dt><dd id="k-jobs">—</dd>
+        <dt>Subagents</dt><dd id="k-subagents">—</dd>
+      </dl>
+    </section>
+
+    <section class="card">
+      <div class="card-hd">
+        <h2>运行时列表（壳内 · 可点开会话）</h2>
+        <button id="rt-refresh" class="ghost">刷新</button>
+      </div>
+      <p class="muted">数据源：状态桥 /kokoa/agents|jobs|subagents。点一行 → 外壳打开对应 dsh 会话标签（#kokoa-session=）。</p>
+      <div class="row">
+        <button id="rt-new-session">新建并行会话</button>
+        <button id="rt-open-sessions">打开会话历史</button>
+      </div>
+      <ul class="ws" id="rt-agents"></ul>
+      <ul class="ws" id="rt-jobs"></ul>
+      <ul class="ws" id="rt-subagents"></ul>
+      <p class="src" id="rt-src">等待外壳推送…</p>
+    </section>
+
+    <section class="card">
+      <div class="card-hd">
+        <h2>文件树（受限根 · 可下钻）</h2>
+        <div class="row">
+          <button id="fs-use-cwd" class="ghost">设为会话 cwd</button>
+          <button id="fs-new-session" class="ghost">在此目录新建会话</button>
+          <button id="fs-refresh" class="ghost">刷新</button>
+        </div>
+      </div>
+      <p class="muted" id="fs-path">路径：—</p>
+      <ul class="ws" id="fs-list"></ul>
+      <p class="hint" id="fs-msg"></p>
+      <p class="src" id="fs-src">数据源：桥 /kokoa/fs/list（仅白名单目录）</p>
+    </section>
+
+    <section class="card">
+      <h2>快捷入口</h2>
+      <div class="row">
+        <button id="go-sessions">会话历史</button>
+        <button id="go-settings">Kokoa 设置</button>
+        <button id="go-cpa">模型出口（CPA）</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="chrome://browser/content/kokoa/home.js"></script>
+</body>
+</html>

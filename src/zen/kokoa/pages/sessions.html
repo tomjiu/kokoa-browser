@@ -1,0 +1,52 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>会话历史</title>
+  <!-- about:kokoases：相对 URL 不解析，脚本只能用绝对 chrome://；内联脚本被 CSP 拦。 -->
+  <link rel="stylesheet" href="chrome://browser/content/kokoa/home.css" />
+  <link rel="stylesheet" href="chrome://browser/content/kokoa/sessions.css" />
+</head>
+<body>
+  <header class="hd">
+    <div class="brand"><span class="dot"></span> Kokoa</div>
+    <div class="sub" id="sub">会话历史</div>
+  </header>
+
+  <main>
+    <section class="card">
+      <div class="card-hd">
+        <h2>dsh 会话</h2>
+        <div class="row">
+          <button id="ses-new-parallel" class="ghost">新建并行会话</button>
+          <button id="ses-open-all" class="ghost">打开全部会话</button>
+          <button id="ses-settings" class="ghost">Kokoa 设置</button>
+          <button id="ses-cpa" class="ghost">CPA 设置</button>
+          <button id="ses-refresh" class="ghost">刷新</button>
+          <button id="ses-home" class="ghost">回到首页</button>
+        </div>
+      </div>
+      <p class="muted" id="ses-empty">
+        暂无会话。点「新建并行会话」由 dsh 创建独立会话标签；或在 AI 工作台对话后再回来打开。
+      </p>
+      <ul class="ws" id="ses-list"></ul>
+      <p class="hint" id="ses-msg"></p>
+      <p class="src" id="ses-src">数据源：等待外壳推送…</p>
+    </section>
+
+    <section class="card">
+      <h2>说明</h2>
+      <ul class="note">
+        <li><b>打开</b>：独立标签打开该 dsh 会话（#kokoa-session=）。</li>
+        <li><b>用此 cwd</b>：把会话工作目录写入新会话默认 cwd。</li>
+        <li><b>打开 AI 工作区</b>：主工作台（dsh 主页），不新开会话。</li>
+        <li><b>AI 分屏</b>：仅布局，与当前网页并排，不改变会话内容。</li>
+        <li><b>新建并行会话</b>：dsh 新建会话 + 独立标签。</li>
+        <li>dsh 设置与 CPA 在「Kokoa 设置」/「CPA 设置」；本页只负责历史与跳转。</li>
+      </ul>
+    </section>
+  </main>
+
+  <script src="chrome://browser/content/kokoa/sessions.js"></script>
+</body>
+</html>

@@ -10,9 +10,11 @@
  * 【与主线的差异 —— 本仓没有的东西，改代码时别照抄主线】
  *   · 没有 boot.js / window.kokoaShell → kokoaShellApi() 回退到本仓
  *     resource:///modules/zen/KokoaShellApi.mjs（四个动作同名同语义）。
- *   · 没有 about:kokoa / about:kokoases / sessions.html → 「打开首页」「会话历史」
- *     两行**不在本仓的组里**（其 Setting 注册保留，等 Phase 2 随首页一起搬）。
- *   · 没有 kokoa.startup.* 启动门面（那是主线 boot.js 的行为）→ 启动两行同样移出组。
+ *   · about:kokoa / about:kokoases **已在 Phase 2.1/2.3 搬进本仓**
+ *     （KokoaAboutPages.mjs 注册协议 + src/zen/kokoa/pages/ 打包页面），
+ *     「打开首页」「会话历史」两行已挂回组里。
+ *   · kokoa.startup.* 启动门面（首屏是首页还是工作台）仍属主线 boot.js 行为 →
+ *     那两行继续移出组，等 Phase 2.2 连门面一起搬。
  *   · 数据面（CPA 桥 127.0.0.1:8318、dsh settings.yaml）由主线的 sidecar 提供，
  *     启动器负责把它拉起来（scripts/start-kokoa.ps1）；本仓不实现 sidecar。
  *
@@ -1579,10 +1581,12 @@ const KOKOA_SHELL_GROUP = {
     { id: "kokoaDshOpenWorkspace", control: "moz-button", l10nId: "kokoa-dsh-open-workspace" },
     { id: "kokoaDshToggleSplit", control: "moz-button", l10nId: "kokoa-dsh-toggle-split" },
     { id: "kokoaDshNewParallel", control: "moz-button", l10nId: "kokoa-dsh-new-parallel" },
-    // ★ 本仓无对应页面（见文件头「与主线的差异」）：
-    //   kokoaDshOpenSessions（会话历史页）/ kokoaOpenHome（about:kokoa）
-    //   / kokoaStartupHomeFirst / kokoaStartupWorkbench（主线 boot.js 的启动门面）
-    //   四行的 Setting 注册保留（同文件下方），但**不挂进组**，故本仓设置页不显示。
+    // ★ 2026-09-19 Phase 2.1/2.3：这两行回来了 —— 本仓现在自己注册 about: 页面
+    //   （KokoaAboutPages.mjs + src/zen/kokoa/pages/ 经 jar.inc.mn 打包）。
+    //   仍**不挂**的两行是 kokoaStartupHomeFirst / kokoaStartupWorkbench：
+    //   那是「启动首屏」门面，属于 boot.js 的启动行为，等 Phase 2.2 连门面一起搬。
+    { id: "kokoaDshOpenSessions", control: "moz-button", l10nId: "kokoa-dsh-open-sessions" },
+    { id: "kokoaOpenHome", control: "moz-button", l10nId: "kokoa-open-home" },
     { id: "kokoaCpaSummary", control: "moz-button", l10nId: "kokoa-cpa-summary" },
     { id: "kokoaOpenCpaPage", control: "moz-button", l10nId: "kokoa-open-cpa-page" },
     { id: "kokoaAiMaxParallel", control: "moz-input-text", l10nId: "kokoa-ai-max-parallel" },

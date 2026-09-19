@@ -2,9 +2,39 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+// Kokoa 内建 about: 页面（about:kokoa 首页 / about:kokoases 会话历史）。
+// ★ 2026-09-19 Phase 2.1/2.3：这两个页面原先由主线 overlay 的 boot.js 注册，
+//   本仓构建里不存在。现在由本仓注册（模块 KokoaAboutPages.mjs，页面资产在
+//   src/zen/kokoa/pages/，经 jar.inc.mn 打进 content/browser/kokoa/）。
+// 【为什么在这里注册】about 协议是**进程级**注册且幂等；放在浏览器窗口启动的最早
+//   时机（MozBeforeInitialXULLayout）即可覆盖后续所有窗口/标签。
+// 【为什么不用 components.conf】那是构建期清单，omni.ja 覆盖不到；我们要在打包
+//   出来的浏览器里动态生效（与 boot.js 当年的理由一致）。
+// 【失败不致命】注册失败只意味着 about:kokoa 打不开，不该拖垮浏览器启动 ——
+//   整体 try/catch 并打 console.error 留痕。
+let gKokoaAboutPagesRegistered = false;
+function kokoaRegisterAboutPages() {
+  if (gKokoaAboutPagesRegistered) {
+    return;
+  }
+  gKokoaAboutPagesRegistered = true;
+  try {
+    const { registerKokoaAboutPagesNow } = ChromeUtils.importESModule(
+      "resource:///modules/zen/KokoaAboutPages.mjs"
+    );
+    const r = registerKokoaAboutPagesNow();
+    if (!r.ok) {
+      console.error("[Kokoa] about 页面注册失败: " + r.log.join(" / "));
+    }
+  } catch (e) {
+    console.error("[Kokoa] about 页面注册抛错: " + e);
+  }
+}
+
 document.addEventListener(
   "MozBeforeInitialXULLayout",
   () => {
+    kokoaRegisterAboutPages();
     // <commandset id="mainCommandSet"> defined in browser-sets.inc
     document
       .getElementById("zenCommandSet")

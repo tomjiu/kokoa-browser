@@ -1,0 +1,16 @@
+/* 会话历史页补充样式（在 home.css 之上）。 */
+.note {
+  margin: 0;
+  padding-left: 1.1em;
+  color: #5c6270;
+  font-size: 13px;
+  line-height: 1.7;
+}
+.note li + li {
+  margin-top: 4px;
+}
+@media (prefers-color-scheme: dark) {
+  .note {
+    color: #9aa0ac;
+  }
+}

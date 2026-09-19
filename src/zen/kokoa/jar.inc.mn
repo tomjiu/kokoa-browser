@@ -6,3 +6,17 @@
 # preprocessor，文件里没有 % 指令会直接报 'no preprocessor directives found'
 # （构建 35099174413 踩的坑）。需要 %include 等预处理时才加 *。
         content/browser/zen-styles/kokoa-ai-sidebar.css                  (../../zen/kokoa/kokoa-ai-sidebar.css)
+
+# ── Kokoa 内建页面（Phase 2.1/2.3：about:kokoa 首页 + about:kokoases 会话历史）────────────
+# ★ 2026-09-19 从主线 overlay 搬进本仓（此前由 overlay 打包，本仓构建里根本没有这两个页）。
+#   路径保持 content/browser/kokoa/* —— 页面里的 <script src> / <link href> 与 boot.js 的
+#   KOKOA_HOME_URI/KOKOA_SESSIONS_URI 都写死了 chrome://browser/content/kokoa/...，
+#   换路径要同时改 HTML 与协议注册表，没必要。
+#   页面是 about: 文档：CSP 禁内联脚本、相对 URL 不解析（见 home.js 顶部两条注释），
+#   所以六个文件都必须有 chrome: 绝对引用（已满足）。
+        content/browser/kokoa/home.html                                  (../../zen/kokoa/pages/home.html)
+        content/browser/kokoa/home.css                                   (../../zen/kokoa/pages/home.css)
+        content/browser/kokoa/home.js                                    (../../zen/kokoa/pages/home.js)
+        content/browser/kokoa/sessions.html                              (../../zen/kokoa/pages/sessions.html)
+        content/browser/kokoa/sessions.css                               (../../zen/kokoa/pages/sessions.css)
+        content/browser/kokoa/sessions.js                                (../../zen/kokoa/pages/sessions.js)
