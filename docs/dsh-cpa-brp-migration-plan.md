@@ -103,7 +103,18 @@ CPA `managed:true running:true` · 端口 3081/8318/9817/28317 均 LISTENING。
 「brp.json 合并进 dsh profile（bootstrap 已处理）」**不实**——dsh 不读
 `profile.json`/`brp.json`；真实面是 cordis.patch.yml + dsh-mcp-client（已改文档）。
 
-### Phase 1 — CPA + dsh 设置进浏览器（3–5 天）★ 当前
+### Phase 1 — CPA + dsh 设置进浏览器（3–5 天）🟡 代码已迁完（2026-09-19）★ 当前
+
+> **2026-09-19 进展**：1.1 / 1.2 / 1.3 / 1.6 完成 —— 设置页**所有权从主线 overlay 回到本仓**：
+> 本仓自持 `src/browser/components/preferences/config/kokoa.mjs`（三个 config pane）、
+> `KokoaShellApi.mjs`（四个外壳动作改用本仓模块）、`createSession`（session/create）、
+> 66 条 ftl、`prefs/kokoa/ui.yaml`；旧 XUL 骨架删除；产物判据改形态（对本仓产物验三个导航项 +
+> 文案 + 旧骨架必须退役）。1.4（`ensure-dsh-cpa-provider` 并入启动器）在 Phase 0 已落地；
+> 1.5（dsh 侧 CPA 卡片只读+跳转）早已收口。
+> **途中查出并修掉 7 处真实缺陷**，其中 ★1「dsh 设置 12 个字段一个都存不进去」正是本 Phase 的验收点
+> （`dshPrefSaveField` 写 `opts.body` 而 `cpaApi` 只读 `opts.json` → 不发请求体 → 桥 400）。
+> **剩**：本仓排构建（CI run 35409073647 进行中）+ 真机点检；然后 Step B 删掉主线注入段。
+> 全过程：`docs/phase1-settings-pane-migration.md`。
 
 | 步骤 | 做什么 | 源 |
 |---|---|---|
