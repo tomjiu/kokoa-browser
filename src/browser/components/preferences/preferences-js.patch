@@ -33,7 +33,7 @@ index 94612d8e28af58fcb04914440348b899a0a1e08f..da3b1ffd09745d09589283356d1001db
          // Replace the template element with the nodes inside of it.
          template.replaceWith(template.content);
  
-@@ -562,6 +570,39 @@ function init_all() {
+@@ -562,6 +570,44 @@ function init_all() {
    register_module("paneHome", gHomePane);
    register_module("paneSearch", gSearchPane);
    register_module("panePrivacy", gPrivacyPane);

@@ -256,3 +256,10 @@ kokoa-browser-msg-allow-fail = Authorization failed: { $detail }
 kokoa-browser-msg-no-tab = No active tab to authorize
 kokoa-browser-msg-brp-error = BRP error: { $detail }
 
+kokoa-browser-guide-no-bridge = The bridge is not running: run scripts/start-kokoa.cmd once and it will be started. ({ $detail })
+kokoa-browser-guide-no-websocket = Cannot reach the bridge: make sure brp-bridge is running (its port is random; discovered via lockfile). ({ $detail })
+kokoa-browser-guide-auth = The bridge refused this connection: the token in the lockfile may be stale — restart the bridge. ({ $detail })
+kokoa-browser-guide-no-active-tab = No active tab: open any page so the AI has something to look at. ({ $detail })
+kokoa-browser-guide-tab-list-error = Tab list failed: the bridge is up but this request errored — retry shortly. ({ $detail })
+kokoa-browser-guide-shot-too-large = Screenshot too large and discarded: shrink the window or try a simpler page. ({ $detail })
+

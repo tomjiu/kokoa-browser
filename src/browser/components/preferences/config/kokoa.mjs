@@ -1090,6 +1090,39 @@ const brpState = {
   busy: false,
 };
 
+/**
+ * Phase 3.2：把桥的失败码翻译成"人该做什么"。
+ *
+ * 【为什么要这层】桥返回的 detail 是给机器看的（no-lockfile / no-websocket /
+ *   no-active-tab / tab-list-error / shot-too-large…）。直接把码显示给用户 =
+ *   用户看不懂，也不知道下一步该干嘛；而这一组的每一行本来就该是"照着做就能修好"。
+ *   映射规则来自 brp-client.ts 的取值域（那边是权威，改那边要同步这里）。
+ */
+function brpGuidance(detail, targetDetail) {
+  const d = String(detail || "");
+  const td = String(targetDetail || "");
+  if (d === "no-lockfile") {
+    // 桥没起来：一条命令能解决（启动编排里的 brp-bridge）
+    return { l10nId: "kokoa-browser-guide-no-bridge" };
+  }
+  if (d.startsWith("connect") || d === "no-websocket") {
+    return { l10nId: "kokoa-browser-guide-no-websocket" };
+  }
+  if (d === "auth") {
+    return { l10nId: "kokoa-browser-guide-auth" };
+  }
+  if (td === "no-active-tab" || d === "no-active-tab") {
+    return { l10nId: "kokoa-browser-guide-no-active-tab" };
+  }
+  if (d === "tab-list-error") {
+    return { l10nId: "kokoa-browser-guide-tab-list-error" };
+  }
+  if (d === "shot-too-large") {
+    return { l10nId: "kokoa-browser-guide-shot-too-large" };
+  }
+  return null;
+}
+
 /** 状态行文案：可达 / 不可达 + 活动标签。纯映射，便于测。 */
 function brpStatusView() {
   const s = brpState.status;
@@ -1097,6 +1130,11 @@ function brpStatusView() {
     return { l10nId: "kokoa-browser-status-checking" };
   }
   if (!s.available) {
+    // 有"该怎么办"就说该怎么办；没有再退回裸 detail（至少不隐藏事实）
+    const guide = brpGuidance(s.detail, s.target_detail);
+    if (guide) {
+      return { l10nId: guide.l10nId, l10nArgs: { detail: String(s.detail || "?") } };
+    }
     return {
       l10nId: "kokoa-browser-status-unavailable",
       l10nArgs: { detail: String(s.detail || "?") },

@@ -247,3 +247,10 @@ kokoa-browser-msg-allow-fail = 授权失败：{ $detail }
 kokoa-browser-msg-no-tab = 没有活动标签，无法授权
 kokoa-browser-msg-brp-error = BRP 报错：{ $detail }
 
+kokoa-browser-guide-no-bridge = 桥没在跑：跑一次启动编排（scripts/start-kokoa.cmd）会把它拉起来。（{ $detail }）
+kokoa-browser-guide-no-websocket = 连不上桥：确认 brp-bridge 还在跑（端口是随机的，靠 lockfile 发现）。（{ $detail }）
+kokoa-browser-guide-auth = 桥拒绝了这个连接：lockfile 里的 token 可能已过期，重启桥即可。（{ $detail }）
+kokoa-browser-guide-no-active-tab = 当前没有活动标签：随便打开一个网页，AI 才能"看"到东西。（{ $detail }）
+kokoa-browser-guide-tab-list-error = 标签列表读失败：桥在线但这次请求出错，稍后重试。（{ $detail }）
+kokoa-browser-guide-shot-too-large = 截图太大被丢弃：缩小窗口或换个简单页面再试。（{ $detail }）
+
