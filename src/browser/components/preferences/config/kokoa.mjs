@@ -1088,6 +1088,7 @@ const brpState = {
   status: null, // { available, detail, target, target_detail, mode }
   msg: null, // { l10nId, l10nArgs? }
   busy: false,
+  tree: null, // { count, sample } —— 「AI 看到了什么」的摘要（Phase 3.5）
 };
 
 /**
@@ -1214,6 +1215,40 @@ async function brpScreenshot() {
   cpaEmitIds(BROWSER_GROUP_IDS);
 }
 
+/**
+ * 取消授权（与授权对称：都由**人**按）。
+ * 【为什么要它】授权是安全边界；只能授权不能撤销 = 用户按错一次就得重启浏览器。
+ */
+async function brpRevokeControl() {
+  if (brpState.busy) {
+    return;
+  }
+  const t = brpState.status && brpState.status.target;
+  if (!t) {
+    brpState.msg = { l10nId: "kokoa-browser-msg-no-tab" };
+    cpaEmitIds(BROWSER_GROUP_IDS);
+    return;
+  }
+  brpState.busy = true;
+  cpaEmitIds(BROWSER_GROUP_IDS);
+  try {
+    const r = await cpaApi("/kokoa/browser/controllable", {
+      method: "POST",
+      json: { tabId: t.tabId, controllable: false },
+    });
+    brpState.msg = r && r.ok
+      ? { l10nId: "kokoa-browser-msg-revoked", l10nArgs: { tabId: String(t.tabId) } }
+      : {
+          l10nId: "kokoa-browser-msg-allow-fail",
+          l10nArgs: { detail: String((r && (r.error || r.detail)) || "?") },
+        };
+  } catch (e) {
+    brpState.msg = { l10nId: "kokoa-browser-msg-allow-fail", l10nArgs: { detail: String(e) } };
+  }
+  brpState.busy = false;
+  cpaEmitIds(BROWSER_GROUP_IDS);
+}
+
 /** 由人授权：把**当前活动标签**标记为可被 AI 操控。 */
 async function brpAllowControl() {
   if (brpState.busy) {
@@ -1249,12 +1284,94 @@ async function brpAllowControl() {
   cpaEmitIds(BROWSER_GROUP_IDS);
 }
 
+/**
+ * AI 的「眼」：把交互树拉回来，抽成"可点元素摘要"显示。
+ *
+ * 【为什么只显示摘要】真实交互树可能很大（几百节点）；设置页一行塞不下，
+ * 也没必要 —— 用户想确认的是"AI 看到的对不对"，给前 N 个候选足够。
+ * 完整树仍在 /kokoa/browser/tree（agent/面板按需取）。
+ */
+async function brpLoadTree() {
+  if (brpState.busy) {
+    return;
+  }
+  brpState.busy = true;
+  cpaEmitIds(BROWSER_GROUP_IDS);
+  try {
+    const r = await cpaApi("/kokoa/browser/tree");
+    if (!r || !r.available) {
+      brpState.tree = null;
+      brpState.msg = {
+        l10nId: "kokoa-browser-msg-tree-fail",
+        l10nArgs: { detail: String((r && r.detail) || "?") },
+      };
+    } else {
+      const sum = brpSummarizeTree(r.tree);
+      brpState.tree = sum;
+      brpState.msg = sum.count
+        ? { l10nId: "kokoa-browser-msg-tree-ok", l10nArgs: { count: String(sum.count) } }
+        : { l10nId: "kokoa-browser-msg-tree-none" };
+    }
+  } catch (e) {
+    brpState.tree = null;
+    brpState.msg = { l10nId: "kokoa-browser-msg-tree-fail", l10nArgs: { detail: String(e) } };
+  }
+  brpState.busy = false;
+  cpaEmitIds(BROWSER_GROUP_IDS);
+}
+
+/**
+ * 把任意形状的交互树压成 { count, sample }。
+ *
+ * 【为什么写得这么"宽松"】BRP 的树结构没在 spec 里钉死（实测字段随版本变），
+ * 所以这里**按语义找**：深度遍历，凡是带"可点"迹象的节点都算候选
+ * （有 selector/ref/id，或 role/type 像按钮/链接/输入框）。宁可多报几个，
+ * 也不要因为字段名变了就显示"0 个可点元素"——那会让用户以为 AI 瞎了。
+ */
+function brpSummarizeTree(tree) {
+  const out = [];
+  const MAX = 8;
+  const CLICKY = /button|link|checkbox|radio|tab|menuitem|option|input|textbox|combobox|switch/i;
+  const seen = new Set();
+  const walk = (n, depth) => {
+    if (!n || typeof n !== "object" || out.length >= MAX || depth > 12) {
+      return;
+    }
+    if (Array.isArray(n)) {
+      for (const c of n) {
+        walk(c, depth + 1);
+      }
+      return;
+    }
+    const sel = n.selector || n.css || n.ref || n.id;
+    const role = n.role || n.type || n.tagName || n.tag || "";
+    const label = n.name || n.label || n.text || n.title || "";
+    if (sel && (CLICKY.test(String(role)) || CLICKY.test(String(sel)) || label)) {
+      const key = String(sel) + "|" + String(label);
+      if (!seen.has(key)) {
+        seen.add(key);
+        out.push({ sel: String(sel).slice(0, 60), label: String(label).slice(0, 40) });
+      }
+    }
+    for (const k of Object.keys(n)) {
+      if (k === "children" || k === "nodes" || k === "tree" || k === "items" || Array.isArray(n[k])) {
+        walk(n[k], depth + 1);
+      }
+    }
+  };
+  walk(tree, 0);
+  return { count: out.length, sample: out };
+}
+
 /** 本组的控件 id（刷新时统一 emit）。 */
 const BROWSER_GROUP_IDS = [
   "kokoaBrowserStatus",
   "kokoaBrowserTab",
   "kokoaBrowserScreenshot",
+  "kokoaBrowserTree",
+  "kokoaBrowserTreeView",
   "kokoaBrowserAllow",
+  "kokoaBrowserRevoke",
   "kokoaBrowserMessage",
 ];
 
@@ -1303,6 +1420,61 @@ function brpRegisterSettings() {
     },
     getControlConfig(config) {
       config.l10nId = "kokoa-browser-screenshot";
+      return config;
+    },
+  });
+
+  // AI 的「眼」：拉交互树并把摘要显示在下一行（可核对"AI 看到了什么"）
+  cpaAddSetting({
+    id: "kokoaBrowserTree",
+    get() {
+      return "";
+    },
+    disabled() {
+      return brpState.busy || !(brpState.status && brpState.status.available);
+    },
+    onUserClick() {
+      brpLoadTree();
+    },
+    getControlConfig(config) {
+      config.l10nId = "kokoa-browser-tree";
+      return config;
+    },
+  });
+
+  cpaAddSetting({
+    id: "kokoaBrowserTreeView",
+    get() {
+      return "";
+    },
+    hidden() {
+      return !brpState.tree || !brpState.tree.count;
+    },
+    getControlConfig(config) {
+      const t = brpState.tree || { sample: [] };
+      // 一行一条：selector ← label（都是 AI 真拿到的锚点）
+      config.l10nId = "kokoa-browser-tree-sample";
+      config.l10nArgs = {
+        list: t.sample.map((s) => (s.label ? s.label + " → " + s.sel : s.sel)).join(" ｜ "),
+      };
+      return config;
+    },
+  });
+
+  // 取消授权（与授权对称：都只由人按）
+  cpaAddSetting({
+    id: "kokoaBrowserRevoke",
+    get() {
+      return "";
+    },
+    disabled() {
+      return brpState.busy || !(brpState.status && brpState.status.target);
+    },
+    onUserClick() {
+      brpRevokeControl();
+    },
+    getControlConfig(config) {
+      config.l10nId = "kokoa-browser-revoke";
       return config;
     },
   });
@@ -1894,7 +2066,12 @@ const KOKOA_BROWSER_GROUP = {
     { id: "kokoaBrowserStatus", control: "moz-box-item", l10nId: "kokoa-browser-status-unavailable" },
     { id: "kokoaBrowserTab", control: "moz-box-item", l10nId: "kokoa-browser-tab-none" },
     { id: "kokoaBrowserScreenshot", control: "moz-button", l10nId: "kokoa-browser-screenshot" },
+    // Phase 3.5：AI 的「眼」。点开把交互树（可点元素 + 选择器）显示在下一行 ——
+    // 这是"AI 到底看到了什么"的**可核对**入口，比只看截图可信。
+    { id: "kokoaBrowserTree", control: "moz-button", l10nId: "kokoa-browser-tree" },
+    { id: "kokoaBrowserTreeView", control: "moz-box-item", l10nId: "kokoa-browser-tree-empty" },
     { id: "kokoaBrowserAllow", control: "moz-button", l10nId: "kokoa-browser-allow" },
+    { id: "kokoaBrowserRevoke", control: "moz-button", l10nId: "kokoa-browser-revoke" },
     { id: "kokoaBrowserMessage", control: "moz-box-item", l10nId: "kokoa-browser-msg-idle" },
   ],
 };

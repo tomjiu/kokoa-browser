@@ -263,3 +263,12 @@ kokoa-browser-guide-no-active-tab = No active tab: open any page so the AI has s
 kokoa-browser-guide-tab-list-error = Tab list failed: the bridge is up but this request errored — retry shortly. ({ $detail })
 kokoa-browser-guide-shot-too-large = Screenshot too large and discarded: shrink the window or try a simpler page. ({ $detail })
 
+kokoa-browser-tree = Show what the AI sees (interaction tree)
+kokoa-browser-tree-empty = (interaction tree not fetched yet)
+kokoa-browser-tree-sample = Elements the AI can click: { $list }
+kokoa-browser-revoke = Revoke AI control of the current tab
+kokoa-browser-msg-tree-ok = Interaction tree fetched: { $count } clickable elements
+kokoa-browser-msg-tree-none = Interaction tree fetched, but no clickable elements found
+kokoa-browser-msg-tree-fail = Failed to fetch interaction tree: { $detail }
+kokoa-browser-msg-revoked = Control authorization revoked for tab #{ $tabId }
+

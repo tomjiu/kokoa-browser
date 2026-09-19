@@ -254,3 +254,12 @@ kokoa-browser-guide-no-active-tab = 当前没有活动标签：随便打开一�
 kokoa-browser-guide-tab-list-error = 标签列表读失败：桥在线但这次请求出错，稍后重试。（{ $detail }）
 kokoa-browser-guide-shot-too-large = 截图太大被丢弃：缩小窗口或换个简单页面再试。（{ $detail }）
 
+kokoa-browser-tree = 查看 AI 看到的元素（交互树）
+kokoa-browser-tree-empty = （还没取过交互树）
+kokoa-browser-tree-sample = AI 可点的元素：{ $list }
+kokoa-browser-revoke = 取消 AI 对当前标签的操控
+kokoa-browser-msg-tree-ok = 已取到交互树：{ $count } 个可点元素
+kokoa-browser-msg-tree-none = 已取到交互树，但没有识别出可点元素
+kokoa-browser-msg-tree-fail = 取交互树失败：{ $detail }
+kokoa-browser-msg-revoked = 已取消标签 #{ $tabId } 的操控授权
+
