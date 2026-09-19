@@ -1,0 +1,21 @@
+{
+  "name": "@kokoa/kokoa-canvas",
+  "version": "0.1.0",
+  "description": "Kokoa 画布（人 + AI 协作白板）前端。产物**不进 omni.ja**（实测 Excalidraw 打包 8.2MB）——由 about:canvas 首次打开时懒加载。场景级 API 见 src/zen/kokoa/KokoaCanvasScene.mjs（那是 AI 的唯一通道）。",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "build": "bash build.sh",
+    "typecheck": "node_modules/.bin/tsc -p tsconfig.json --noEmit || npx -y -p typescript@5.9.3 tsc -p tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.7",
+    "esbuild": "0.28.2",
+    "typescript": "^5.9.0"
+  },
+  "dependencies": {
+    "@excalidraw/excalidraw": "0.18.1"
+  }
+}
