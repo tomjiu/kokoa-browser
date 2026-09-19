@@ -278,6 +278,43 @@ check_kokoa_tests() {
   fi
 }
 
+# packages/* 的测试：与 src/zen/kokoa/*.test.js 的差别是**需要先构建**。
+#
+# 【为什么单独一段】packages/kokoa-canvas 的产物体积 8.4MB（Excalidraw），按约定
+#   **不入库**（见该包 .gitignore 的说明）——所以它的单测输入 dist/pure.mjs 要先 build。
+#   这里显式"先 build 再测"，并且 build 失败就算失败（别让"没测到"伪装成"通过"）。
+check_package_tests() {
+  say "=== 包测试（packages/*）==="
+  local dir="packages/kokoa-canvas"
+  if [ ! -f "$dir/package.json" ] || [ ! -d "$dir/test" ]; then
+    say "  (没有需要构建的包测试)"
+    return 0
+  fi
+  if ! out=$(cd "$dir" && bash build.sh 2>&1); then
+    bad "$dir 构建失败"
+    printf "%s\n" "$out" | tail -12 | sed "s/^/      /"
+    return 0
+  fi
+  ok "$dir 构建通过"
+  local ran=0 failed=0 t
+  for t in "$dir"/test/*.mjs; do
+    [ -f "$t" ] || continue
+    ran=$((ran+1))
+    if out=$(node "$t" 2>&1); then
+      ok "$(basename "$t") 通过"
+    else
+      failed=$((failed+1))
+      bad "$(basename "$t") 失败"
+      printf "%s\n" "$out" | tail -12 | sed "s/^/      /"
+    fi
+  done
+  if [ $ran -eq 0 ]; then
+    say "  (没有测试文件)"
+  elif [ $failed -eq 0 ]; then
+    ok "$ran 个包测试文件全部通过"
+  fi
+}
+
 check_patches() {
   say "=== patch 文件自洽性 ==="
   local n=0 bad=0
@@ -592,13 +629,13 @@ case "$MODE" in
   l10n)   check_l10n ;;
   brands) check_brands ;;
   patches) check_patches ;;
-  tests)  check_kokoa_tests ;;
+  tests)  check_kokoa_tests; check_package_tests ;;
   jarmn)  check_jarmn ;;
   mozbuild) check_mozbuild_dirs ;;
   mozconfig) check_mozconfig ;;
   panes)  check_pane_category ;;
   prefs-shadow) check_pref_shadowing ;;
-  all)    check_syntax; check_json; check_prefs; check_l10n; check_brands; check_patches; check_kokoa_tests; check_jarmn; check_mozbuild_dirs; check_mozconfig; check_pane_category; check_pref_shadowing ;;
+  all)    check_syntax; check_json; check_prefs; check_l10n; check_brands; check_patches; check_kokoa_tests; check_package_tests; check_jarmn; check_mozbuild_dirs; check_mozconfig; check_pane_category; check_pref_shadowing ;;
   *)      say "用法: bash scripts/check.sh [syntax|json|prefs|l10n|brands|all]"; exit 2 ;;
 esac
 
