@@ -83,6 +83,23 @@ overlay** —— 页面资产（`home.html/css/js`、`sessions.html/css/js`）�
 ① 启动到 `about:blank`，检查启动门面是否把首页开出来并选中；
 ② 启动后再导航 `about:kokoa` / `about:kokoases` 看能否打开。
 
+### 实测结论（2026-09-19，在 CI 产物上就地验证）
+
+| 场景 | 结果 |
+|---|---|
+| 启动 URL = `about:blank` + 启动门面 | ✅ **首页被开出来并选中**（窗口标题 Kokoa Browser；截图量化 304 色 / 19.9% 非白，非空白页） |
+| 启动后导航 `about:kokoa` | ✅ 打开（标题正常） |
+| 启动 URL 直接 = `about:kokoa` | ⚠️ **仍「Problem loading page」**（见下） |
+
+**关于第三行（诚实记录）**：把 `about:kokoa` 当**命令行启动 URL** 时仍打不开 ——
+首个标签的 URL 解析发生在 `ZenStartup.init()` 与窗口脚本**之前**，
+而那两处已经是本仓能拿到的最早时机（再早就要动 Firefox 的 `BrowserGlue`/
+`browser-startup`，超出「源码分支可搬运资产」的范围）。
+**产品路径不依赖它**：启动器不会把 `about:kokoa` 当启动 URL（它开 dsh 工作台或空白），
+首屏由**注册之后**才跑的启动门面负责 —— 所以用户可见行为是对的。
+若将来真要让命令行 URL 也稳，正路是在 `components.conf` 里做**构建期** about 注册
+（那是 Firefox 的原生机制，本仓构建时可用），代价是要维护一份构建期清单。
+
 ## 验收（Phase 2.1/2.3 的机器判据）
 
 1. `scripts/check-artifact.py <产物>/browser` → 6 条新 ★ 全 OK（**需下一次构建的产物**）。
