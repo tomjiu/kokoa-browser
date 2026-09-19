@@ -11,7 +11,7 @@ index 1b8c38159314b6edee9e6f455beb2b63db1ad3f0..1308345db640dba6b2848b49ef7c1181
    <link rel="localization" href="branding/brand.ftl"/>
    <link rel="localization" href="browser/browser.ftl"/>
      <!-- Used by fontbuilder.js -->
-@@ -118,6 +120,35 @@
+@@ -118,6 +120,42 @@
          iconsrc="chrome://browser/skin/preferences/category-general.svg"
          data-l10n-id="pane-general-title">
        </html:moz-page-nav-button>
@@ -35,19 +35,26 @@ index 1b8c38159314b6edee9e6f455beb2b63db1ad3f0..1308345db640dba6b2848b49ef7c1181
 +        iconsrc="chrome://mozapps/skin/extensions/category-themes.svg"
 +        data-l10n-id="pane-zen-marketplace-title">
 +      </html:moz-page-nav-button>
-+      <!-- Kokoa 分类。注意：paneKokoa 需要 preferences-js.patch 里改条件才会展开 -->
-+      <!-- 【2026-09-16 去掉图标】用户要求「不要应用内部的 logo」。
-+           标准做法：不写 iconsrc属性（paneProfiles / paneTranslations 就是这样，
-+           上游自己就有 2 个无图标的分类）。
-+           原本用的是 chrome://browser/skin/customize.svg（Zen 的橙色定制图标）。 -->
++      <!-- Kokoa 三个分类（config pane 体系：SettingPaneManager + 模块，
++           不是 register_module 的 template 体系）。注册见 preferences-js.patch，
++           内容见 preferences/config/kokoa.mjs，文案见 browser/preferences/kokoa.ftl。
++           【2026-09-16 去掉图标】不写 iconsrc 属性 = 不显示应用内 logo。 -->
 +      <html:moz-page-nav-button id="category-kokoa"
 +        view="paneKokoa"
-+        data-l10n-id="pane-kokoa-title">
++        data-l10n-id="kokoa-category">
++      </html:moz-page-nav-button>
++      <html:moz-page-nav-button id="category-kokoa-dsh"
++        view="paneKokoaDsh"
++        data-l10n-id="kokoa-dsh-category">
++      </html:moz-page-nav-button>
++      <html:moz-page-nav-button id="category-kokoa-cpa"
++        view="paneKokoaCpa"
++        data-l10n-id="kokoa-cpa-category">
 +      </html:moz-page-nav-button>
        <html:moz-page-nav-button id="category-sync"
          hidden="true"
          view="paneSync"
-@@ -248,6 +270,11 @@
+@@ -248,6 +286,10 @@
  #include privacy.inc.xhtml
  #include sync.inc.xhtml
  #include moreFromMozilla.inc.xhtml
@@ -55,7 +62,6 @@ index 1b8c38159314b6edee9e6f455beb2b63db1ad3f0..1308345db640dba6b2848b49ef7c1181
 +#include zenKeyboardShortcuts.inc.xhtml
 +#include zenTabsManagement.inc.xhtml
 +#include zenMarketplace.inc.xhtml
-+#include kokoaSettings.inc.xhtml
          </vbox>
        </vbox>
      </vbox>

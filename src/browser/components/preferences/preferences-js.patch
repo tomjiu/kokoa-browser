@@ -33,14 +33,42 @@ index 94612d8e28af58fcb04914440348b899a0a1e08f..da3b1ffd09745d09589283356d1001db
          // Replace the template element with the nodes inside of it.
          template.replaceWith(template.content);
  
-@@ -562,6 +565,11 @@ function init_all() {
+@@ -562,6 +570,39 @@ function init_all() {
    register_module("paneHome", gHomePane);
    register_module("paneSearch", gSearchPane);
    register_module("panePrivacy", gPrivacyPane);
 +  register_module("paneZenLooks", gZenLooksAndFeel);
 +  register_module("paneZenTabManagement", gZenWorkspacesSettings);
 +  register_module("paneZenCKS", gZenCKSSettings);
-+  register_module("paneKokoa", gKokoaSettings);
++  // Kokoa 三个设置分类（config pane 体系：SettingPaneManager + 模块）。
++  // 内容 preferences/config/kokoa.mjs；文案 browser/preferences/kokoa.ftl。
++  // 每个 pane 各自 try/catch：抛异常会中断 preferences.js 后续初始化，整个设置页白屏。
++  for (const [kokoaPaneId, kokoaPaneCfg] of [
++    ["kokoa", { l10nId: "kokoa-header", groupIds: ["kokoaShellGroup"] }],
++    [
++      "kokoaDsh",
++      {
++        l10nId: "kokoa-dsh-category",
++        groupIds: ["kokoaDshPrefGroup", "kokoaDshSessionGroup", "kokoaDshToolGroup"],
++      },
++    ],
++    [
++      "kokoaCpa",
++      {
++        l10nId: "kokoa-cpa-category",
++        groupIds: ["kokoaCpaStatusGroup", "kokoaCpaUpstreamGroup"],
++      },
++    ],
++  ]) {
++    try {
++      SettingPaneManager.registerPane(kokoaPaneId, {
++        ...kokoaPaneCfg,
++        module: "chrome://browser/content/preferences/config/kokoa.mjs",
++      });
++    } catch (e) {
++      console.error("KOKOA-ERR registerPane " + kokoaPaneId + " failed: " + e);
++    }
++  }
 +  register_module("paneZenMarketplace", gZenMarketplaceManager);
  
    // Restore the cached Firefox Labs nav button visibility so it shows

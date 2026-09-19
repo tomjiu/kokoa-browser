@@ -7,9 +7,11 @@
  *
  * 【为什么要这个测试】
  *   菜单功能有【三处】描述同一件事，它们是【人工保持同步】的：
- *     ① src/zen/kokoa/KokoaMenubar.mjs      的 MENU_ITEMS（实现）
- *     ② src/browser/.../kokoaSettings.inc.xhtml  的勾选框
- *     ③ prefs/kokoa/menu.yaml             的默认值
+ *     ① src/zen/kokoa/KokoaMenubar.mjs        的 MENU_ITEMS（实现）
+ *     ② src/browser/components/preferences/config/kokoa.mjs  的勾选框
+ *        （2026-09-19 前是 kokoaSettings.inc.xhtml 的 XUL 模板；设置页迁到
+ *          config pane 体系后，勾选框变成 kokoaSafeAddSetting 的 pref 绑定）
+ *     ③ prefs/kokoa/menu.yaml                 的默认值
  *
  *   我在写这个功能时就犯过一次：设置页里加了 ai-workspace 勾选框，
  *   但模块里根本没有对应项 —— 那是个【死开关】（用户勾了没反应）。
@@ -42,15 +44,15 @@ function ok(name, cond, extra) {
 }
 
 // ── 读三个文件 ──────────────────────────────────────────────────
-const xhtmlPath = join(repoRoot, "src", "browser", "components", "preferences", "kokoaSettings.inc.xhtml");
+const panePath = join(repoRoot, "src", "browser", "components", "preferences", "config", "kokoa.mjs");
 const yamlPath = join(repoRoot, "prefs", "kokoa", "menu.yaml");
 
-let xhtml = "";
+let pane = "";
 let yaml = "";
 try {
-  xhtml = readFileSync(xhtmlPath, "utf8");
+  pane = readFileSync(panePath, "utf8");
 } catch (e) {
-  console.log("  FAIL 读不到设置页: " + xhtmlPath);
+  console.log("  FAIL 读不到设置页模块: " + panePath);
   process.exit(1);
 }
 try {
@@ -60,18 +62,39 @@ try {
   process.exit(1);
 }
 
-// ── 提取设置页里的 preference 名 ────────────────────────────────
-// 【注意】要先剥掉注释 —— 注释里有示例 <checkbox preference="完整 pref 名" />，
-//          不剥会被当成真实的（我第一版就被它骗了）。
-const xhtmlPrefs = [];
+// ── 提取设置页里的菜单 pref 名（pref 绑定）──────────────────────
+// 【注意】必须先剥注释 —— 文件里有示例与解释文字，不剥会被当成真实绑定
+//         （上一版 XUL 时代就被注释里的示例 <checkbox preference=...> 骗过）。
+//         行注释只在「不是 ://」时切，免得把 "http://127.0.0.1:8318" 截断。
+// 只收 kokoa.menu.* —— 同文件还有 CPA/dsh 的绑定，它们不属于本测试的契约。
+const panePrefs = [];
 {
-  const noComments = xhtml.replace(/<!--[\s\S]*?-->/g, "");
-  const re = /preference="([^"]+)"/g;
-  let m;
-  while ((m = re.exec(noComments)) !== null) {
-    xhtmlPrefs.push(m[1]);
+  // 【★ 踩坑记录（2026-09-19）】不要用「整段正则剥注释」：
+  //   kokoa.mjs:403 的行注释里出现 defaults/preferences/*.js —— 那个 "/*"
+  //   会让 /\/\*[\s\S]*?\*\//g 从那里起配到下一个 "*/" 为止，
+  //   把中间所有真实代码（包括全部菜单 pref 绑定）整段吃掉
+  //   → 本测试静默变成「设置页 0 项」（假绿/假红）。
+  //   改成逐行状态机：只认【整行】的注释起止，代码行原样匹配。
+  let inBlock = false;
+  for (const raw of pane.split(/\r?\n/)) {
+    const t = raw.trim();
+    if (inBlock) {
+      if (t.includes("*/")) inBlock = false;
+      continue;
+    }
+    if (t.startsWith("/*")) {
+      if (!t.includes("*/")) inBlock = true;
+      continue;
+    }
+    if (t.startsWith("//") || t.startsWith("*")) continue;
+    const re = /pref:\s*"(kokoa\.menu\.[^"]+)"/g;
+    let m;
+    while ((m = re.exec(raw)) !== null) {
+      panePrefs.push(m[1]);
+    }
   }
 }
+const xhtmlPrefs = panePrefs;
 
 // ── 提取 yaml 里的 name / value ─────────────────────────────────
 const yamlPrefs = new Map();
@@ -94,7 +117,7 @@ const contractPrefs = new Map(MENU_CONTRACT.map(e => [e.pref, e.defaultVisible])
 console.log("=== 三处契约 ===");
 console.log("");
 console.log("  模块(实现):   " + contractPrefs.size + " 项");
-console.log("  设置页(勾选框): " + xhtmlPrefs.length + " 项");
+console.log("  设置页(勾选框): " + panePrefs.length + " 项");
 console.log("  prefs(默认值):  " + yamlPrefs.size + " 项");
 console.log("");
 

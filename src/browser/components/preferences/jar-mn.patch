@@ -8,6 +8,6 @@ index aec7888f59eeb5dbffc62b861fe223159ac42586..a593f3015469c11c762ae01465964251
     content/browser/preferences/widgets/update-information.css          (widgets/update-information/update-information.css)
 +
 +   content/browser/preferences/zen-settings.js
-+   content/browser/preferences/kokoa-settings.js
++   content/browser/preferences/config/kokoa.mjs          (config/kokoa.mjs)
     content/browser/preferences/widgets/update-state.mjs          (widgets/update-state/update-state.mjs)
     content/browser/preferences/widgets/update-state.css          (widgets/update-state/update-state.css)

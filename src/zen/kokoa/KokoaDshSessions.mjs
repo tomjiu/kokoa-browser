@@ -64,6 +64,8 @@ export const EP_SESSION_LIST = "session/list";
 
 /** 会话导出端点 —— dsh-session-log-export 的 SESSION_LOG_EXPORT_PATH（GET/HEAD）。 */
 export const EP_SESSION_EXPORT = "session.export";
+/** 新建会话。注意：它的参数键是 args.request（不是 session/list 的 args._request）。 */
+export const EP_SESSION_CREATE = "session/create";
 
 /** 客户端请求 envelope 的 type 字段值。 */
 export const TYPE_REQUEST = "client-request";
@@ -328,6 +330,92 @@ export async function fetchSessionList(panelUrl, deps = {}) {
   }
   // 服务端已按 updatedAt 降序排好（fixture 与真实 face 一致）——我们不重排
   return { ok: true, sessions };
+}
+
+/**
+ * 在 dsh 侧新建一个空白会话（一元 RPC：POST /api/session/create）。
+ *
+ * 【★ 参数键与 session/list 不同（主线 2026-09-18 实测）】
+ *   session/list   → payload.args._request
+ *   session/create → payload.args.request
+ *   用错会得到 gateway/arguments-invalid。buildEnvelope 在"已含 args"时透传，
+ *   所以这里显式传 { args: { request } }。
+ *
+ * @param {string} panelUrl 带 ?token= 的 dsh URL（KokoaDshSidecar / KokoaAiPanel 的产物）
+ * @param {{cwd?: string, workspaceId?: string}} [opts]
+ * @param {object} [deps] fetchImpl / rpcIdFactory（测试注入）
+ * @returns {Promise<{ok: true, sessionId: string}|{ok: false, error: string}>}
+ */
+export async function createSession(panelUrl, opts = {}, deps = {}) {
+  const doFetch = deps.fetchImpl || ((input, init) => globalThis.fetch(input, init));
+  const rpcIdFactory = deps.rpcIdFactory || defaultRpcId;
+
+  const parsed = extractOriginAndToken(panelUrl);
+  if (!parsed) {
+    return { ok: false, error: "panel URL 里没有 token，无法新建会话（需要带 token 的 dsh URL）" };
+  }
+  const { origin, token } = parsed;
+
+  // ① token 换 cookie（与 fetchSessionList 同一套路，让浏览器自己处理 303）
+  let exchange;
+  try {
+    exchange = await doFetch(origin + "/?token=" + encodeURIComponent(token), {
+      method: "GET",
+      credentials: "include",
+    });
+  } catch (e) {
+    return { ok: false, error: "连不上 dsh（" + origin + "）：" + e };
+  }
+  if (exchange.status === 401) {
+    return { ok: false, error: "dsh 拒绝了这个 token（可能已重启换 token），请重新打开 AI 工作区" };
+  }
+
+  // ② 一元 RPC：POST /api/session/create
+  const request = {};
+  if (opts && typeof opts.cwd === "string" && opts.cwd) {
+    request.cwd = opts.cwd;
+  }
+  if (opts && typeof opts.workspaceId === "string" && opts.workspaceId) {
+    request.workspaceId = opts.workspaceId;
+  }
+  const rpcId = rpcIdFactory();
+  const envelope = buildEnvelope(EP_SESSION_CREATE, { args: { request } }, rpcId);
+  let resp;
+  try {
+    resp = await doFetch(rpcUrl(origin, EP_SESSION_CREATE), {
+      method: "POST",
+      credentials: "include",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(envelope),
+    });
+  } catch (e) {
+    return { ok: false, error: "新建会话请求失败：" + e };
+  }
+  if (resp.status === 401) {
+    return { ok: false, error: "dsh 新建会话 401（cookie 没带上或已过期）" };
+  }
+  if (!resp.ok) {
+    return { ok: false, error: "dsh 新建会话 HTTP " + resp.status };
+  }
+
+  // ③ 解析 + 校验会话 id（形状不对就是错，不猜）
+  let parsedResp;
+  try {
+    parsedResp = parseRpcResponse(await resp.json(), rpcId);
+  } catch (e) {
+    return { ok: false, error: "dsh 响应不像 session/create 的 envelope：" + e.message };
+  }
+  if (!parsedResp.ok) {
+    return {
+      ok: false,
+      error: "dsh 返回错误 " + parsedResp.error.code + ": " + parsedResp.error.message,
+    };
+  }
+  const sid = parsedResp.value && parsedResp.value.sessionId;
+  if (typeof sid !== "string" || !RE_SESSION_ID.test(sid)) {
+    return { ok: false, error: "bad-session-id: " + JSON.stringify(parsedResp.value) };
+  }
+  return { ok: true, sessionId: sid };
 }
 
 /**

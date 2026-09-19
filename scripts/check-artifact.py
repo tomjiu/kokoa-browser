@@ -212,31 +212,37 @@ else:
 #      漏写 -> 设置页右侧空白 / 闪烁 / 内容残留到别的分类。
 #      （用户报的「Kokoa 设置页空白 + 内容出现在账户与同步那一栏」就是这个。）
 #    参考对象：Zen 自己的 pane 顶层节点全都写 data-category，同文件可对比。
+#    ★ 2026-09-19 改判据：Kokoa 设置页从「本仓 XUL template」换成了
+#      「config pane 体系」（SettingPaneManager + 模块），且所有权从主线 overlay
+#      搬回本仓（见 docs/settings-pane-mechanism.md）。所以这里改查四件事：
+#        ① 三个导航项进了 preferences.xhtml（preferences-xhtml.patch 生效）
+#        ② 设置页挂了 kokoa.ftl（zen-preferences-links.xhtml 被 include）
+#        ③ 旧 XUL 骨架**已退役**（源码删了、产物里也不许再有 template-paneKokoa）
+#        ④ 模块与两个 locale 的文案都进了包（jar-mn.patch + locales/ 生效）
 px = [n for n in names if n.endswith('browser/preferences/preferences.xhtml')]
 if px:
     t = z.read(px[0]).decode('utf-8', 'replace')
-    m = re.search(r'<html:template\s+id="template-paneKokoa"\s*>(.*?)</html:template>',
-                  t, re.S)
-    if not m:
-        chk('★ Kokoa 面板 template 进了 preferences.xhtml', False,
-            '找不到 template-paneKokoa —— include 未生效')
-    else:
-        try:
-            proot = ET.fromstring(
-                '<root xmlns:html="http://www.w3.org/1999/xhtml">%s</root>' % m.group(1))
-            kids = list(proot)
-            miss = [k.tag.split('}')[-1] for k in kids
-                    if k.get('data-category') != 'paneKokoa']
-            chk('★ Kokoa 面板顶层节点都带 data-category="paneKokoa"',
-                bool(kids) and not miss,
-                ('%d 个顶层节点漏/错: %s' % (len(miss), ','.join(miss))) if miss
-                else '一个顶层节点都没有？')
-        except ET.ParseError as e:
-            chk('★ Kokoa 面板顶层节点都带 data-category="paneKokoa"', False,
-                '解析 template 失败: %s' % e)
+    for pid in ('category-kokoa', 'category-kokoa-dsh', 'category-kokoa-cpa'):
+        chk('★ Kokoa 导航项 id="%s" 进了 preferences.xhtml' % pid,
+            ('id="%s"' % pid) in t,
+            'preferences-xhtml.patch 未生效（设置页左侧不会出现这个分类）')
+    chk('★ 设置页挂了 browser/preferences/kokoa.ftl（否则文案全是裸 id）',
+        'browser/preferences/kokoa.ftl' in t,
+        'zen-preferences-links.xhtml 的 <link rel="localization"> 没被 include')
+    chk('★ 旧 XUL 骨架 pane 已退役（产物里不得再有 template-paneKokoa）',
+        'template-paneKokoa' not in t,
+        'kokoaSettings.inc.xhtml 已删但产物里还有 —— include 没删干净')
 else:
-    chk('★ Kokoa 面板 template 进了 preferences.xhtml', False,
+    chk('★ Kokoa 导航项进了 preferences.xhtml', False,
         '产物里没有 browser/preferences/preferences.xhtml')
+
+mod_hit = [n for n in names if n.endswith('browser/preferences/config/kokoa.mjs')]
+chk('★ Kokoa 设置模块进包（config/kokoa.mjs）', mod_hit,
+    mod_hit[0] if mod_hit else '缺 browser/preferences/config/kokoa.mjs（检查 jar-mn.patch）')
+ftl_pane = [n for n in names if n.endswith('browser/preferences/kokoa.ftl')]
+chk('★ Kokoa 设置文案进包（en-US + zh-CN 两个 locale）',
+    len(ftl_pane) >= 2,
+    '命中 %d 个：%s' % (len(ftl_pane), ','.join(ftl_pane[:3])))
 
 # 8. ★ 应用内品牌 logo 清理（2026-09-17 加）
 #    只查【装饰性品牌标记】；功能性图标（favicon / 站点身份 / 页面图标 /

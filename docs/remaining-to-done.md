@@ -32,7 +32,7 @@
 | 阶段 | 状态 |
 |---|---|
 | **Phase 0** 一键起来 | ✅ 0.1–0.5、0.7 完成；0.6 纯 UI 点击项仍开放 |
-| **Phase 1** CPA/dsh 设置原生 | ⬜ 下一阶段（本仓已有设置骨架 + 主线 `kokoa.mjs` 待迁） |
+| **Phase 1** CPA/dsh 设置原生 | 🟡 **代码已迁完（2026-09-19）**：设置页三个分类（Kokoa / Kokoa dsh / Kokoa CPA）现由本仓自持（`config/kokoa.mjs` + 三个 pane 注册 + 66 条 ftl + `KokoaShellApi.mjs`），旧 XUL 骨架退役；本仓 check.sh 全绿、新增 31 条单测、产物校验对现有产物 38/38。**剩**：本仓排构建验证 + 主线删掉 overlay 注入段（Step B，见 `phase1-settings-pane-migration.md`） |
 | Phase 2 首页/文件树 | ⬜ |
 | Phase 3 BRP 产品化 | ⬜（扩展 `tab-list-error` 仍开放） |
 | Phase 4 链收敛 | ⬜ |
@@ -74,8 +74,9 @@
 
 # 四、一句话
 
-**代码层与 M0 运行时自动化判据已闭环（Phase 0 完成 + BRP MCP 进 dsh）；
-剩纯 UI 人工点检与 BRP 扩展重连，然后进 Phase 1（CPA/dsh 设置迁入本仓）。**
+**Phase 0 闭环；Phase 1 的代码迁移已完成**（设置页所有权回到本仓，旧骨架退役，
+并顺带修掉 7 个真实缺陷 —— 其中 ★1「dsh 设置一个字段都存不进去」正是 Phase 1 的验收点）。
+**剩**：本仓排一次构建 + 真机点检；然后主线删除 overlay 注入段（Step B）；再进 Phase 2（首页/文件树）。
 
 # 五、基线升级遗留：156.0 patch 债（PR #3 已清）
 
@@ -89,6 +90,8 @@
 | 主线 | `42e616c` | BRP MCP insert 注入 + 文档勘误 |
 | 主线 | `8da8229` | Phase 0 启动编排 |
 | 本仓 | `65ad421` | Phase 0 复核 + 验收记录 |
+| 本仓 | （2026-09-19） | Phase 1 设置页迁移 + 三个模块测试 + 产物判据改形态 |
+| 主线 | （2026-09-19） | 修 ★1/★6/★12/★13/★19 与 sidecar ★10/★3/★4 |
 | 本仓 | `fd95bcb` | 迁移计划 |
 
 两仓均 ahead 3，**未 push**。

@@ -1,0 +1,30 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+# Kokoa —— 设置页里那几条**浏览器侧** pref 的默认值。
+#
+# 【谁在用】
+#   src/zen/kokoa/KokoaAiPanel.mjs         读 kokoa.ai.*（并行标签上限 / 后台回收）
+#   src/browser/components/preferences/config/kokoa.mjs
+#                                          设置页里的三行控件（绑定 + 默认值二选一）
+#
+# 【★ 为什么不只靠模块里的 getDefaultBranch】
+#   config/kokoa.mjs 在导入时会用 Services.prefs.getDefaultBranch("kokoa.")
+#   再设一遍同样的值（防止「模块没加载 → pref 不存在」）。两处**值必须一致**，
+#   否则谁后写谁生效，读起来像随机行为。这里放的是随产品发布的默认值。
+#
+# 【契约】改这里就要改 config/kokoa.mjs 里的默认值（同一份语义，两处）。
+
+# 并行 AI 标签上限（0 = 不限）。超过时打开新会话会按 LRU 回收后台标签。
+- name: kokoa.ai.maxParallel
+  value: 4
+
+# 回收后台 AI 标签（只 discard，不关标签）。
+- name: kokoa.ai.autoDiscardBackground
+  value: true
+
+# 新 dsh 会话的默认工作目录（空 = 用 dsh 自己的默认）。
+# 消费方：设置页「新建并行 AI 会话」按钮传 cwd；工具栏路径同理。
+- name: kokoa.dsh.sessionCwd
+  value: ""

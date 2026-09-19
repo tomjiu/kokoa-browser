@@ -6,7 +6,8 @@
 #
 # 【谁在用这些 pref】
 #   src/zen/kokoa/KokoaMenubar.mjs  （读它们 + 设菜单项的 hidden 属性）
-#   src/browser/components/preferences/kokoaSettings.inc.xhtml  （设置页的勾选框）
+#   src/browser/components/preferences/config/kokoa.mjs  （设置页的勾选框；
+#     2026-09-19 前是 kokoaSettings.inc.xhtml 的 XUL 模板，已随迁移退役）
 #
 # 【★ 契约】
 #   pref 名 / 默认值必须与 KokoaMenubar.mjs 里的 MENU_ITEMS 一致。

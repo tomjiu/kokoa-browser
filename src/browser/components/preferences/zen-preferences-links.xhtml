@@ -9,3 +9,8 @@
 />
 <script src="chrome://browser/content/zenThemeModifier.js"/>
 <link rel="localization" href="browser/preferences/zen-preferences.ftl"/>
+<!-- Kokoa 设置分类（Kokoa / Kokoa dsh / Kokoa CPA）的文案。
+     ★ 2026-09-19：此前该 ftl 由**主线 overlay 注入** preferences.xhtml
+     （build.py 的 KOKOA-L10N 段）；设置页搬进本仓后必须由本仓自己挂，
+     否则裸浏览器构建里 kokoa-category / kokoa-shell-group 等 66 条全是裸 id。 -->
+<link rel="localization" href="browser/preferences/kokoa.ftl"/>
