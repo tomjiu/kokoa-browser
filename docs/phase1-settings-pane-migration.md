@@ -60,6 +60,26 @@
 | 主线 `scripts/test.sh` | 见提交时的记录（本轮同时修好了 `native-settings-groups`；`browser-panel-smoke` 的陈旧断言也一并纠正） |
 | **未验证** | 本仓**尚未排过构建**（CI ~2–3h）。两个 patch（`preferences-js` / `preferences-xhtml`）只做了 hunk 行数自洽校验，**没有**对真上游树 `git apply --check`（本地无 engine 树）。 |
 
+## 4.5 ★ Step B 的前置条件（2026-09-19 实测踩到）
+
+**结论：在本仓新产物**成为产品的基础 zip **之前**，不能删主线的注入段。**
+
+实测过程：fork 的 CI 交叉构建已绿（run 35410121003，产物 39/39 判据全过、三个分类都在），
+于是我在主线 `build.py` 里把 `patch_preferences_js` / `patch_preferences_xhtml` 退役并重建
+本地产品 —— 结果本地产物**只剩一个分类**，且 `template-paneKokoa` 又出现了。原因：
+本地产品的基础 zip 还是 **2026-09-17 那次交叉构建**，里面装的是 fork **旧的 XUL 骨架**
+（`paneKokoa` + `kokoaSettings.inc.xhtml`），而 overlay 的注入段正是「提供三个新分类 +
+删掉那个旧骨架」的那一步。把注入段退掉，就回到"旧骨架 + 无新分类"。
+
+顺序必须是：
+
+1. 本仓构建绿 → 产物判据过（本轮已达成：`39 通过 / 0 失败`）。
+2. **把产品的基础 zip 换成这个新产物**（或重跑一次产品编排让它更新基础 zip）。
+3. 再删主线的注入段（`build.py` 两个函数 + `KOKOA_SETTINGS_PANE`）并重建验证三分类仍在。
+
+我按这个顺序回退了 Step B 的改动（`git checkout -- build.py README.md`），产品恢复
+`38 通过 / 0 失败`。**Step B 未做完，是刻意停在安全点**，不是遗漏。
+
 ## 5. 收口顺序（Step B，等本仓构建绿了再做）
 
 1. 本仓排一次构建 → 产物上跑 `check-artifact.py`（应全绿）→ 真机打开 `about:preferences#kokoa`，
