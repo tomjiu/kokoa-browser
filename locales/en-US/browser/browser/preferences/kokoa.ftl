@@ -117,7 +117,7 @@ kokoa-dsh-theme =
     .label = dsh UI theme (system | light | dark)
 
 kokoa-dsh-font-size =
-    .label = dsh body font size (10–28)
+    .label = dsh body font size (12–17)
 
 kokoa-dsh-locale =
     .label = dsh UI language (e.g. zh-CN / en-US; may be empty)

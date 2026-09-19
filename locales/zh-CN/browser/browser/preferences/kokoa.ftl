@@ -108,7 +108,7 @@ kokoa-dsh-theme =
     .label = dsh 界面主题（system | light | dark）
 
 kokoa-dsh-font-size =
-    .label = dsh 正文字号（10–28）
+    .label = dsh 正文字号（12–17）
 
 kokoa-dsh-locale =
     .label = dsh 界面语言（如 zh-CN / en-US，可留空）

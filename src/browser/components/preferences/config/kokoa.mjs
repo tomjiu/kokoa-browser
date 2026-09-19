@@ -1294,7 +1294,22 @@ kokoaAddSetting({
       getControlConfig(config) {
         config.l10nId = l10nId;
         if (control) config.control = control;
-        if (options) config.options = options;
+        if (options) {
+          // ★ 2026-09-19 修复：下拉选项此前只有 JS 属性 label，没有映射到 DOM，
+          //   于是 moz-select 的 5 个下拉（主题/语言/权限/忙碌回车/记录视图）
+          //   渲染成**空壳**——能看到框、点不出一项（真机截图实测）。
+          //   契约（产物 setting-control.mjs:445-469 + toolkit moz-select.mjs:135-139）：
+          //     · 选项是 moz-select 的子元素 moz-option，可见文本取自该元素的
+          //       **label 属性**（populateOptions: node.getAttribute("label")），
+          //       而不是 JS 属性；label 属性只能经 config.controlAttrs 透传。
+          //     · Lit 的 repeat() 用 opt.key 做身份 —— 没有 key 时全部重复，
+          //       列表渲染不可靠，所以这里补上。
+          config.options = options.map((o) => ({
+            key: String(o.key != null ? o.key : o.value !== "" ? o.value : o.label),
+            value: o.value,
+            controlAttrs: { label: o.label },
+          }));
+        }
         return config;
       },
     });
