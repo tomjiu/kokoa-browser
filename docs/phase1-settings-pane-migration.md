@@ -80,6 +80,23 @@
 我按这个顺序回退了 Step B 的改动（`git checkout -- build.py README.md`），产品恢复
 `38 通过 / 0 失败`。**Step B 未做完，是刻意停在安全点**，不是遗漏。
 
+## 4.6 ✅ Step B 已完成（2026-09-19，主线 45ad88f）
+
+按 §4.5 的顺序做完：
+
+1. 本仓 CI 产物绿（run 35410121003）→ 判据 39/39。
+2. 以该产物为**新基础**复制一份（`.kokoa-product/stepb-35410121003`），在它上面跑主线 overlay 构建。
+3. 退役 `build.py` 的 `patch_preferences_js` / `patch_preferences_xhtml`（改为 no-op，
+   保留函数名与退役前实现留档），README 的 `KOKOA_SETTINGS_PANE` 标注退役。
+   **保留** `KOKOA_SETTINGS_PANE_DIAG` 探针注入（产品侧取证唯一手段）。
+4. 重建 → 产物判据 **38/38**、一键验收三个分类截图非空白（89-314 色 / 20-28% 非白）。
+5. 主线套件按新契约同步：`native-settings-composition` 改为「overlay 不得再碰
+   preferences.js/xhtml」+「DIAG 探针仍可注入且幂等」，两条旧契约测试显式 skip。**36 套件全绿。**
+
+> ⚠️ 本地那个从 09-17 旧基础构建的产品目录（`.kokoa-product/manual-*`）仍然带着 overlay 注入
+> （因为它的基础里还是 fork 旧的 XUL 骨架）。要用新架构，跑
+> `.kokoa-product/stepb-35410121003/kokoa/kokoa.exe`，或让产品编排换成新的基础 zip。
+
 ## 5. 收口顺序（Step B，等本仓构建绿了再做）
 
 1. 本仓排一次构建 → 产物上跑 `check-artifact.py`（应全绿）→ 真机打开 `about:preferences#kokoa`，
