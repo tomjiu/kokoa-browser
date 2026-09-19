@@ -44,7 +44,12 @@ index 94612d8e28af58fcb04914440348b899a0a1e08f..da3b1ffd09745d09589283356d1001db
 +  // 内容 preferences/config/kokoa.mjs；文案 browser/preferences/kokoa.ftl。
 +  // 每个 pane 各自 try/catch：抛异常会中断 preferences.js 后续初始化，整个设置页白屏。
 +  for (const [kokoaPaneId, kokoaPaneCfg] of [
-+    ["kokoa", { l10nId: "kokoa-header", groupIds: ["kokoaShellGroup"] }],
++    // kokoaShellGroup = 外壳开关 + dsh 入口 + AI 上限（Phase 1）
++    // kokoaBrowserGroup = 浏览器控制：BRP 状态 / 截图 / 由人授权操控（Phase 3.1）
++    [
++      "kokoa",
++      { l10nId: "kokoa-header", groupIds: ["kokoaShellGroup", "kokoaBrowserGroup"] },
++    ],
 +    [
 +      "kokoaDsh",
 +      {

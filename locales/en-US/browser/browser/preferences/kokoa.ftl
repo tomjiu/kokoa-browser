@@ -240,3 +240,19 @@ kokoa-cpa-msg-truncated-key =
 
 kokoa-cpa-msg-not-loaded =
     .label = ✗ The configuration has not been read yet, so saving is refused (an empty form would wipe the upstream settings). Check the state bridge and reopen this page.
+kokoa-browser-group = Browser control
+kokoa-browser-status-checking = Checking the status bridge…
+kokoa-browser-status-ok = Status bridge reachable ({ $detail })
+kokoa-browser-status-unavailable = Status bridge unreachable ({ $detail })
+kokoa-browser-tab = Active tab #{ $tabId }: { $title }
+kokoa-browser-tab-none = Active tab: none (BRP controls no tab)
+kokoa-browser-screenshot = Screenshot the current tab
+kokoa-browser-allow = Allow AI to control the current tab
+kokoa-browser-msg-idle = (no message)
+kokoa-browser-msg-screenshot-ok = Screenshot created in a background tab
+kokoa-browser-msg-screenshot-fail = Screenshot failed: { $detail }
+kokoa-browser-msg-allowed = Tab #{ $tabId } is now controllable
+kokoa-browser-msg-allow-fail = Authorization failed: { $detail }
+kokoa-browser-msg-no-tab = No active tab to authorize
+kokoa-browser-msg-brp-error = BRP error: { $detail }
+

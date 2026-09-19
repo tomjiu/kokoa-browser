@@ -1073,7 +1073,240 @@ function cpaFormDisabled() {
   return cpaState.busy || !cpaState.form || !cpaState.managed;
 }
 
+/**
+ * 浏览器控制（Phase 3.1）—— 状态、截图、由人授权操控。
+ *
+ * 【与 CPA/dsh 的关系】三者共用同一个状态桥（cpaApi 即"桥请求"的通用入口），
+ *   但**不是同一件事**：CPA 管模型上游，dsh 管会话/工具，BRP 管"AI 能不能看/点浏览器"。
+ *
+ * 【为什么不自动授权】桥的 POST /kokoa/browser/controllable 是**人工同意链**：
+ *   BRP 会对未授权标签回 BRP_TAB_NOT_CONTROLLABLE（-32003）。UI 只做"替人按一下"，
+ *   任何"自动放宽"的写法都是把安全设计绕过去。
+ */
+const brpState = {
+  loaded: false,
+  status: null, // { available, detail, target, target_detail, mode }
+  msg: null, // { l10nId, l10nArgs? }
+  busy: false,
+};
+
+/** 状态行文案：可达 / 不可达 + 活动标签。纯映射，便于测。 */
+function brpStatusView() {
+  const s = brpState.status;
+  if (!s) {
+    return { l10nId: "kokoa-browser-status-checking" };
+  }
+  if (!s.available) {
+    return {
+      l10nId: "kokoa-browser-status-unavailable",
+      l10nArgs: { detail: String(s.detail || "?") },
+    };
+  }
+  return {
+    l10nId: "kokoa-browser-status-ok",
+    l10nArgs: { detail: String(s.detail || "ok") },
+  };
+}
+
+/** 活动标签行文案。没有活动标签时明说"没有"，不显示空行。 */
+function brpTabView() {
+  const s = brpState.status;
+  const t = s && s.target;
+  if (!t) {
+    return { l10nId: "kokoa-browser-tab-none" };
+  }
+  return {
+    l10nId: "kokoa-browser-tab",
+    l10nArgs: { tabId: String(t.tabId), title: String(t.title || t.url || "?").slice(0, 80) },
+  };
+}
+
+async function brpRefreshStatus() {
+  try {
+    const s = await cpaApi("/kokoa/browser/status");
+    brpState.status = s;
+    brpState.loaded = true;
+    if (s && s.brp_error) {
+      brpState.msg = {
+        l10nId: "kokoa-browser-msg-brp-error",
+        l10nArgs: { detail: String(s.brp_error.message || s.brp_error.errorCode || "?") },
+      };
+    }
+  } catch (e) {
+    brpState.status = { available: false, detail: "bridge-unreachable" };
+    brpState.loaded = true;
+  }
+  cpaEmitIds(BROWSER_GROUP_IDS);
+}
+
+/** 截图：拿到 data_url 就交给系统看图程序打开（设置页放不下大图）。 */
+async function brpScreenshot() {
+  if (brpState.busy) {
+    return;
+  }
+  brpState.busy = true;
+  cpaEmitIds(BROWSER_GROUP_IDS);
+  try {
+    const shot = await cpaApi("/kokoa/browser/screenshot");
+    if (!shot || !shot.available || !shot.data_url) {
+      brpState.msg = {
+        l10nId: "kokoa-browser-msg-screenshot-fail",
+        l10nArgs: { detail: String((shot && shot.detail) || "?") },
+      };
+    } else {
+      // 用 data: URL 开一个标签（本地渲染，不落盘、不外发）
+      const win = kokoaBrowserWin();
+      if (win && win.gBrowser) {
+        const tab = win.gBrowser.addTab(shot.data_url, {
+          inBackground: true,
+          triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal(),
+        });
+        // 不切换过去：用户可能正在看别的页面，新标签留在后台
+        void tab;
+      }
+      brpState.msg = { l10nId: "kokoa-browser-msg-screenshot-ok" };
+    }
+  } catch (e) {
+    brpState.msg = {
+      l10nId: "kokoa-browser-msg-screenshot-fail",
+      l10nArgs: { detail: String(e) },
+    };
+  }
+  brpState.busy = false;
+  cpaEmitIds(BROWSER_GROUP_IDS);
+}
+
+/** 由人授权：把**当前活动标签**标记为可被 AI 操控。 */
+async function brpAllowControl() {
+  if (brpState.busy) {
+    return;
+  }
+  const t = brpState.status && brpState.status.target;
+  if (!t) {
+    brpState.msg = { l10nId: "kokoa-browser-msg-no-tab" };
+    cpaEmitIds(BROWSER_GROUP_IDS);
+    return;
+  }
+  brpState.busy = true;
+  cpaEmitIds(BROWSER_GROUP_IDS);
+  try {
+    const r = await cpaApi("/kokoa/browser/controllable", {
+      method: "POST",
+      json: { tabId: t.tabId, controllable: true },
+    });
+    brpState.msg = r && r.ok
+      ? { l10nId: "kokoa-browser-msg-allowed", l10nArgs: { tabId: String(t.tabId) } }
+      : {
+          l10nId: "kokoa-browser-msg-allow-fail",
+          l10nArgs: { detail: String((r && (r.error || r.detail)) || "?") },
+        };
+  } catch (e) {
+    brpState.msg = {
+      l10nId: "kokoa-browser-msg-allow-fail",
+      l10nArgs: { detail: String(e) },
+    };
+  }
+  brpState.busy = false;
+  await brpRefreshStatus();
+  cpaEmitIds(BROWSER_GROUP_IDS);
+}
+
+/** 本组的控件 id（刷新时统一 emit）。 */
+const BROWSER_GROUP_IDS = [
+  "kokoaBrowserStatus",
+  "kokoaBrowserTab",
+  "kokoaBrowserScreenshot",
+  "kokoaBrowserAllow",
+  "kokoaBrowserMessage",
+];
+
+/** 浏览器控制组的设置注册（由 cpaRegisterSettings 调用）。 */
+function brpRegisterSettings() {
+  cpaAddSetting({
+    id: "kokoaBrowserStatus",
+    setup() {
+      brpRefreshStatus();
+      return undefined;
+    },
+    get() {
+      return "";
+    },
+    getControlConfig(config) {
+      const v = brpStatusView();
+      config.l10nId = v.l10nId;
+      config.l10nArgs = v.l10nArgs || {};
+      return config;
+    },
+  });
+
+  cpaAddSetting({
+    id: "kokoaBrowserTab",
+    get() {
+      return "";
+    },
+    getControlConfig(config) {
+      const v = brpTabView();
+      config.l10nId = v.l10nId;
+      config.l10nArgs = v.l10nArgs || {};
+      return config;
+    },
+  });
+
+  cpaAddSetting({
+    id: "kokoaBrowserScreenshot",
+    get() {
+      return "";
+    },
+    disabled() {
+      return brpState.busy || !(brpState.status && brpState.status.available);
+    },
+    onUserClick() {
+      brpScreenshot();
+    },
+    getControlConfig(config) {
+      config.l10nId = "kokoa-browser-screenshot";
+      return config;
+    },
+  });
+
+  cpaAddSetting({
+    id: "kokoaBrowserAllow",
+    get() {
+      return "";
+    },
+    disabled() {
+      return brpState.busy || !(brpState.status && brpState.status.target);
+    },
+    onUserClick() {
+      brpAllowControl();
+    },
+    getControlConfig(config) {
+      config.l10nId = "kokoa-browser-allow";
+      return config;
+    },
+  });
+
+  cpaAddSetting({
+    id: "kokoaBrowserMessage",
+    get() {
+      return "";
+    },
+    hidden() {
+      return !brpState.msg;
+    },
+    getControlConfig(config) {
+      const m = brpState.msg || { l10nId: "kokoa-browser-msg-idle" };
+      config.l10nId = m.l10nId;
+      config.l10nArgs = m.l10nArgs || {};
+      return config;
+    },
+  });
+}
+
 function cpaRegisterSettings() {
+  // 0) 浏览器控制（BRP）：状态 / 截图 / 由人授权操控（Phase 3.1）
+  brpRegisterSettings();
+
   // 0) dsh sidecar 状态 + 打开 AI 工作区（从被删的旧 pane 迁移）
   kokoaAddSetting({
     id: "kokoaDshStatus",
@@ -1600,6 +1833,31 @@ const KOKOA_SHELL_GROUP = {
     { id: "kokoaMenuPrint", l10nId: "kokoa-menu-print" },
     { id: "kokoaMenuFxa", l10nId: "kokoa-menu-fxa" },
     { id: "kokoaMenuSaveFile", l10nId: "kokoa-menu-save-file" },
+  ],
+};
+
+/**
+ * 浏览器控制（Phase 3.1）。
+ *
+ * 【为什么独立成组】BRP 的能力（状态/截图/允许操控）**不是 CPA 的一部分**：
+ *   它管的是"AI 能不能看/点这个浏览器"。混进 CPA 组会让人以为"配了上游就能操控"。
+ *
+ * 【安全设计（照抄桥的意图，别在 UI 上放宽）】桥的三个路由：
+ *   GET  /kokoa/browser/status      可达性 + 活动标签
+ *   GET  /kokoa/browser/screenshot  活动标签截图（data_url）
+ *   POST /kokoa/browser/controllable 由**人**显式授权标签可被操控
+ * 桥**绝不自动放宽权限**（BRP 会回 BRP_TAB_NOT_CONTROLLABLE/-32003），
+ * 所以这一组里必须有一个「由人按」的授权按钮，而不是自动开关。
+ */
+const KOKOA_BROWSER_GROUP = {
+  l10nId: "kokoa-browser-group",
+  headingLevel: 2,
+  items: [
+    { id: "kokoaBrowserStatus", control: "moz-box-item", l10nId: "kokoa-browser-status-unavailable" },
+    { id: "kokoaBrowserTab", control: "moz-box-item", l10nId: "kokoa-browser-tab-none" },
+    { id: "kokoaBrowserScreenshot", control: "moz-button", l10nId: "kokoa-browser-screenshot" },
+    { id: "kokoaBrowserAllow", control: "moz-button", l10nId: "kokoa-browser-allow" },
+    { id: "kokoaBrowserMessage", control: "moz-box-item", l10nId: "kokoa-browser-msg-idle" },
   ],
 };
 

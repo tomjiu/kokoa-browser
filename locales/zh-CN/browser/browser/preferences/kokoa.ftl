@@ -147,7 +147,6 @@ kokoa-menu-save-file =
 
 ## CPA 管理（唯一入口 = 本设置页；dsh 内卡片只读）
 
-kokoa-cpa-category = Kokoa CPA
 kokoa-cpa-status-group =
     .label = CPA 服务状态
     .description = CPA（模型路由）进程状态。管理上游 Key / 别名请用下方表单；保存后点「重启 CPA」。
@@ -232,3 +231,19 @@ kokoa-cpa-msg-truncated-key =
 
 kokoa-cpa-msg-not-loaded =
     .label = ✗ 配置尚未读取成功，拒绝保存（空表单会把上游配置覆盖掉）。请检查状态桥后重开本页。
+kokoa-browser-group = 浏览器控制
+kokoa-browser-status-checking = 正在检测状态桥…
+kokoa-browser-status-ok = 状态桥可达（{ $detail }）
+kokoa-browser-status-unavailable = 状态桥不可达（{ $detail }）
+kokoa-browser-tab = 活动标签 #{ $tabId }：{ $title }
+kokoa-browser-tab-none = 活动标签：没有（BRP 未接管任何标签）
+kokoa-browser-screenshot = 截图当前标签
+kokoa-browser-allow = 允许 AI 操控当前标签
+kokoa-browser-msg-idle = （无消息）
+kokoa-browser-msg-screenshot-ok = 截图已生成，见后台新标签
+kokoa-browser-msg-screenshot-fail = 截图失败：{ $detail }
+kokoa-browser-msg-allowed = 已授权标签 #{ $tabId } 可被操控
+kokoa-browser-msg-allow-fail = 授权失败：{ $detail }
+kokoa-browser-msg-no-tab = 没有活动标签，无法授权
+kokoa-browser-msg-brp-error = BRP 报错：{ $detail }
+
