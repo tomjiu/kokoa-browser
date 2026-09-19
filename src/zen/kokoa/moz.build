@@ -29,5 +29,6 @@ EXTRA_JS_MODULES.zen += [
     "KokoaDshSidecar.mjs",
     "KokoaMenubar.mjs",
     "KokoaShellApi.mjs",
+    "KokoaStartup.mjs",
     "KokoaWorkspaceSessions.mjs",
 ]

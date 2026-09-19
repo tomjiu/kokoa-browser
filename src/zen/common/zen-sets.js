@@ -31,10 +31,36 @@ function kokoaRegisterAboutPages() {
   }
 }
 
+// Kokoa 启动门面（Phase 2.2）：首屏 = about:kokoa 首页（可用 pref 关掉）。
+// 【顺序】必须先注册 about 协议再开门面 —— 否则 about:kokoa 开不出来。
+// 【为什么在这里】这是**窗口级**行为（要动 gBrowser 的标签），与 about 注册同属
+//   启动最早时机；MozBeforeInitialXULLayout 时 gBrowser 已可用但会话还没恢复完，
+//   因此本函数只"确保首页在且被选中"，稍后再清空白标签由 ensureHomeFirst 内部
+//   按 URI 判定（恢复出来的标签不会被它误关）。
+let gKokoaStartupFacadeDone = false;
+function kokoaApplyStartupFacade() {
+  if (gKokoaStartupFacadeDone) {
+    return;
+  }
+  gKokoaStartupFacadeDone = true;
+  try {
+    const { ensureHomeFirst, realDeps } = ChromeUtils.importESModule(
+      "resource:///modules/zen/KokoaStartup.mjs"
+    );
+    const r = ensureHomeFirst(window, realDeps());
+    if (!r.ok) {
+      console.error("[Kokoa] 启动门面失败: " + JSON.stringify(r));
+    }
+  } catch (e) {
+    console.error("[Kokoa] 启动门面抛错: " + e);
+  }
+}
+
 document.addEventListener(
   "MozBeforeInitialXULLayout",
   () => {
     kokoaRegisterAboutPages();
+    kokoaApplyStartupFacade();
     // <commandset id="mainCommandSet"> defined in browser-sets.inc
     document
       .getElementById("zenCommandSet")

@@ -29,6 +29,30 @@ overlay** —— 页面资产（`home.html/css/js`、`sessions.html/css/js`）�
 **设置页影响**：`kokoaOpenHome` / `kokoaDshOpenSessions` 两行**挂回组里**；
 `kokoaStartupHomeFirst` / `kokoaStartupWorkbench` 仍不挂（属于 2.2 的启动门面）。
 
+### 2.2 启动门面搬进本仓 ✅
+
+| 件 | 位置 | 说明 |
+|---|---|---|
+| 模块 | `src/zen/kokoa/KokoaStartup.mjs` | `ensureHomeFirst(win, deps)`：按 `kokoa.startup.homeFirst`（默认 **true**）/ `kokoa.startup.workbench`（默认 **false**）决定首屏；三条约束照抄 boot.js 的教训（可控 / 不抢会话标签 / 只清"没用过的空白标签"） |
+| 接线 | `src/zen/common/zen-sets.js` | **在 about 协议注册之后**调用（顺序错就开不出 about:kokoa）；窗口级只做一次 |
+| 默认值 | `prefs/kokoa/ui.yaml` | `kokoa.startup.homeFirst=true` / `kokoa.startup.workbench=false` |
+| 单测 | `src/zen/kokoa/KokoaStartup.test.js` | 27 条：四条 pref 组合、幂等、不抢标签、只清空白、失败软着陆 |
+
+设置页 `kokoaStartupHomeFirst` / `kokoaStartupWorkbench` 两行**挂回组里** —— 至此设置页
+不再有「注册了但不相干」的行。
+
+### 2.4 文件树 ✅（页面侧无需改动）
+
+`home.js` 的文件树走 `GET /kokoa/fs/list[?path=]`，实测该端点返回
+`{ok:true, path, entries[]}`（本机取到 4 个条目）——即**不依赖 overlay glue**，
+搬到本仓后直接可用。剩下的只是下一次产物上人工看一眼。
+
+### 2.5 二级菜单显隐可配置 ✅（早已实现）
+
+`KokoaMenubar.mjs` 的 `MENU_ITEMS` + `isVisible()`（读 `kokoa.menu.*.visible`）+
+设置页勾选框 + `prefs/kokoa/menu.yaml` 默认值，三者由 `KokoaMenuConsistency.test.js`
+钉住（5 项全过）。
+
 ## 未完成（下一步）
 
 | 步骤 | 做什么 | 依赖 |

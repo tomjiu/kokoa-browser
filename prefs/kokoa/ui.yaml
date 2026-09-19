@@ -24,6 +24,15 @@
 - name: kokoa.ai.autoDiscardBackground
   value: true
 
+# 首屏 = about:kokoa 首页（Phase 2.2 启动门面；消费方 src/zen/kokoa/KokoaStartup.mjs）。
+# 语义：homeFirst 为真 → 开首页；两者都假时按「不要工作台 = 要首页」处理。
+- name: kokoa.startup.homeFirst
+  value: true
+
+# 首屏 = AI 工作台（dsh）。默认关：Kokoa 的第一眼是首页，不是 dsh 的界面。
+- name: kokoa.startup.workbench
+  value: false
+
 # 新 dsh 会话的默认工作目录（空 = 用 dsh 自己的默认）。
 # 消费方：设置页「新建并行 AI 会话」按钮传 cwd；工具栏路径同理。
 - name: kokoa.dsh.sessionCwd
