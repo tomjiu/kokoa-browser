@@ -452,7 +452,29 @@ kokoaDiag.mark(
  * dsh「设置 → 模型」页的 Kokoa CPA 卡片已改为只读（见
  * packages/dsh-plugin-cpa-settings/src/client.tsx），编辑/保存/重启只在本页。
  */
-const CPA_BRIDGE = "http://127.0.0.1:8318";
+/** 桥默认端口（与 sidecar 的 DEFAULT_BRIDGE_PORT 一致）。 */
+const CPA_BRIDGE_DEFAULT_PORT = 8318;
+
+/**
+ * 状态桥基址。
+ * ★ 2026-09-19 修复：此前是写死的 "http://127.0.0.1:8318"，而 sidecar 的端口
+ *   可由 KOKOA_BRIDGE_PORT 覆盖（kokoa/apps/sidecar/src/index.ts:34）。改了端口
+ *   之后设置页会一律显示「状态桥不可达」，且没有任何线索指向"端口被改过"。
+ *   规则与 sidecar 的 parseBridgePort 对齐：非整数 / 越界 → 回落默认。
+ */
+function cpaBridgeBase() {
+  let port = CPA_BRIDGE_DEFAULT_PORT;
+  try {
+    const raw = String(Services.env.get("KOKOA_BRIDGE_PORT") || "");
+    const n = parseInt(raw, 10);
+    if (Number.isInteger(n) && n > 0 && n <= 65535) {
+      port = n;
+    }
+  } catch (e) {
+    /* Services.env 不可用 → 默认端口 */
+  }
+  return "http://127.0.0.1:" + port;
+}
 /** 逻辑别名集合（与 cpa-config.ts / cpa-embed 模板一致）。 */
 const CPA_ALIASES = ["code", "cheap", "strong", "vision"];
 /** 脱敏值形态（cpa-config.ts maskKey：前 4 … 后 4；碰撞占位含 #n 后缀仍命中）。 */
@@ -495,7 +517,7 @@ function cpaApi(path, options) {
     let channel;
     try {
       channel = NetUtil.newChannel({
-        uri: Services.io.newURI(CPA_BRIDGE + path),
+        uri: Services.io.newURI(cpaBridgeBase() + path),
         loadUsingSystemPrincipal: true,
         contentPolicyType: Ci.nsIContentPolicy.TYPE_OTHER,
       });
@@ -581,7 +603,7 @@ function cpaDiagFetchProbe() {
     return;
   }
   cpaState.fetchProbeDone = true;
-  fetch(CPA_BRIDGE + "/kokoa/health", { cache: "no-store" }).then(
+  fetch(cpaBridgeBase() + "/kokoa/health", { cache: "no-store" }).then(
     r => kokoaDiag.mark("cpa.fetch-probe", "ok status=" + r.status),
     e => {
       kokoaDiag.mark("cpa.fetch-probe", "THREW " + (e && e.name) + ": " + (e && e.message));
@@ -668,7 +690,7 @@ function cpaStatusView() {
         }
       : {
           l10nId: "kokoa-cpa-status-bridge-down",
-          l10nArgs: { bridge: CPA_BRIDGE },
+          l10nArgs: { bridge: cpaBridgeBase() },
           iconSrc: CPA_ICON.error,
         };
   }
