@@ -271,6 +271,15 @@ if canvas_js:
     chk('★ 画布模式词汇与产品一致（user/collaborative/ai）',
         all(k in t for k in ('"user"', '"collaborative"', '"ai"')),
         'three-mode vocabulary missing')
+    chk('★ 画布已接场景级 API（window.__kokoaCanvas）',
+        '__kokoaCanvas =' in t and 'KokoaCanvasScene.mjs' in t,
+        '画布页未接 KokoaCanvasScene —— AI 就没有受控通道可走')
+    chk('★ 画布默认模式是 user（安全默认：人没允许前 AI 改不动）',
+        'mode: "user"' in t,
+        '默认模式不是 user —— 安全默认被破坏')
+scene_mod = [n for n in names if n.endswith('modules/zen/KokoaCanvasScene.mjs')]
+chk('★ 画布场景模块进包（KokoaCanvasScene.mjs）', scene_mod,
+    scene_mod[0] if scene_mod else '缺 modules/zen/KokoaCanvasScene.mjs（检查 moz.build）')
 
 page_mod = [n for n in names if n.endswith('modules/zen/KokoaAboutPages.mjs')]
 chk('★ about 页面注册模块进包（KokoaAboutPages.mjs）', page_mod,
