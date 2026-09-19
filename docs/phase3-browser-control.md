@@ -45,6 +45,41 @@ Fluent 行为不可依赖）→ 删掉后一份。现在中英各 **81 键、零
 「开/建会话标签」能力（Phase 1 已用），后者由 dsh 客户端插件在面板里提供。
 **3.4 剩下的只有真机点检**（列表能否显示、点条目是否只切面板不切会话）。
 
+## 3.5 AI 的「手与眼」接出（2026-09-19，进行中）
+
+**背景（调研结论）**：桥（BRP）本来就支持 `page.getInteractionTree` / `element.click` /
+`element.type` / `element.fill` / `element.scroll` / `element.hover` /
+`element.select` / `element.getAttribute` / `keyboard.press` / `script.execute` /
+`page.navigate` 等（见 `vendor/brp-spec/adapter/brp_mcp_adapter.py:373-390` 的
+`capabilities.actions`，那是权威清单）；但我们的 `brp-client.ts` 一直**只用了
+`tab.list` + `page.screenshot`** —— 于是 AI「看得见、点不动」。
+
+**已接出**：
+
+| 层 | 内容 |
+|---|---|
+| `brp-client.ts` | `interactionTree()`（眼）+ `act(method, params)`（手）；`act` 只放行 `BRP_ACTIONS` **白名单（12 条，逐条校验参数）**，未知动作**本地即拒**（连 WS 都不开） |
+| `bridge.ts` | `GET /kokoa/browser/tree`、`POST /kokoa/browser/act`；EINVAL 口径（未知动作/参数不合法）→ **400**，其余 200 如实透传 |
+| 设置页 | 新增「查看 AI 看到的元素」（交互树摘要：label → selector）与「取消 AI 对当前标签的操控」（授权对称可撤销） |
+
+**失败码分级（都来自真机实测）**：
+
+| 桥返回 | 我们的 detail | 用户该做什么 |
+|---|---|---|
+| `BRP_TAB_NOT_CONTROLLABLE` | `not-controllable` | 去设置页按「允许 AI 操控当前标签」 |
+| `BRP_CAPABILITY_NOT_SUPPORTED` | `capability-unsupported` | **升级浏览器扩展**（桥是通的，截图可用；不是重启能解决的） |
+| `no-lockfile` / `no-websocket` / `auth` 等 | 同名 | 见设置页指引（跑启动编排 / 重启桥） |
+
+> ★ **真机实测记录（2026-09-19）**：本机扩展版本对 `page.getInteractionTree` 回
+> `BRP_CAPABILITY_NOT_SUPPORTED` —— 即**扩展没实现这项能力**（截图与状态都正常）。
+> 这正是「失败码必须分级」的价值：含糊成 `brp-error` 会让人去白折腾重启桥。
+> **待办**：确认扩展版本 / 是否需要在扩展侧实现该 action；在此之前
+> 「AI 的手」可用（`element.click/type` 走的是另一条路径，扩展是否支持需实测确认），
+> 「AI 的眼（结构化）」不可用，只能靠截图。
+
+**验证**：BRP 客户端测试 **34 项全过**（新增 9 项，含 3 项安全关键：未知动作不得建会话、
+参数不合法不得发帧、BRP 错误码必须原样透传；以及 tree 的两种失败分级）。
+
 ## 待办
 
 | 步骤 | 做什么 |

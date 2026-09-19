@@ -1118,6 +1118,12 @@ function brpGuidance(detail, targetDetail) {
   if (d === "tab-list-error") {
     return { l10nId: "kokoa-browser-guide-tab-list-error" };
   }
+  if (d === "capability-unsupported") {
+    // 实测（2026-09-19）：本机扩展版本对 page.getInteractionTree 回
+    // BRP_CAPABILITY_NOT_SUPPORTED —— 桥是通的（截图可用），但这项能力没实现。
+    // 与"桥/网络故障"处置完全不同：重启没用，要升级浏览器扩展。
+    return { l10nId: "kokoa-browser-guide-capability-unsupported" };
+  }
   if (d === "shot-too-large") {
     return { l10nId: "kokoa-browser-guide-shot-too-large" };
   }
