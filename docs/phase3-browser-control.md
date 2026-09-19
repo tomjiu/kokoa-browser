@@ -29,11 +29,27 @@ Fluent 行为不可依赖）→ 删掉后一份。现在中英各 **81 键、零
 「组真的出现在设置页」需要**下一次构建**的产物（本地那个产品的 `preferences.js`
 来自 35420617352 的产物，那时还没有 `kokoaBrowserGroup`）—— 见构建 35428133433。
 
+## 3.4 侧栏会话列表 —— 核对：**绑定已存在**（2026-09-19 结论）
+
+计划里写「侧栏第 2/3 步：接 `KokoaDshSessions` 做会话列表（不遥控切换）」。
+本轮核对源码后的结论：**这一层已经在主线面板包里实现了**，且正是计划要求的口径：
+
+| 事实 | 证据 |
+|---|---|
+| 侧栏条目 | `packages/kokoa-browser-panel/lib/client.js` 注入 `sidebar.panellist`（id=`kokoa-browser`，文案「浏览器」） |
+| 会话数据面 | 同文件 `installWorkspaceSessions()`：读 dsh 客户端的**公开** `ctx.sessions`（`list.getSnapshot` / `subscribe` / `open` / `create` / `clear`） |
+| 「不遥控切换」 | 代码注释与实现都明确：`No remote calls, private stores, token reads, messages, or DOM-based session navigation` —— 只读 origin/hash，绝不读 `location.href/search`（那是启动凭据） |
+| 会话身份 | `#kokoa-session=<id>` fragment（多会话并行）；面板负责 reconcile，不新建会话 |
+
+也就是说 `KokoaDshSessions`（本仓模块）与侧栏列表**不是同一条路**：前者是浏览器侧的
+「开/建会话标签」能力（Phase 1 已用），后者由 dsh 客户端插件在面板里提供。
+**3.4 剩下的只有真机点检**（列表能否显示、点条目是否只切面板不切会话）。
+
 ## 待办
 
 | 步骤 | 做什么 |
 |---|---|
 | 3.2 | 启动自检：无 lockfile → 一键拉起（0.1 已做）；扩展未装 → 引导（未做） |
 | 3.3 | `setControllable` 缺口的 UI 明示（已在本组体现）；AI `tab.open` 路径保持可用 |
-| 3.4 | 侧栏第 2/3 步：接 `KokoaDshSessions` 会话列表（不遥控切换） |
+| 3.4 | ~~接会话列表~~ → **已存在**（见上节）：只剩真机点检「点条目只切面板不切会话」 |
 | 3.5 | 真机：navigate/snapshot/screenshot + 人工接管 |
