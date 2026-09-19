@@ -70,12 +70,32 @@ Fluent 行为不可依赖）→ 删掉后一份。现在中英各 **81 键、零
 | `BRP_CAPABILITY_NOT_SUPPORTED` | `capability-unsupported` | **升级浏览器扩展**（桥是通的，截图可用；不是重启能解决的） |
 | `no-lockfile` / `no-websocket` / `auth` 等 | 同名 | 见设置页指引（跑启动编排 / 重启桥） |
 
-> ★ **真机实测记录（2026-09-19）**：本机扩展版本对 `page.getInteractionTree` 回
-> `BRP_CAPABILITY_NOT_SUPPORTED` —— 即**扩展没实现这项能力**（截图与状态都正常）。
-> 这正是「失败码必须分级」的价值：含糊成 `brp-error` 会让人去白折腾重启桥。
-> **待办**：确认扩展版本 / 是否需要在扩展侧实现该 action；在此之前
-> 「AI 的手」可用（`element.click/type` 走的是另一条路径，扩展是否支持需实测确认），
-> 「AI 的眼（结构化）」不可用，只能靠截图。
+> ★ **真机实测记录（2026-09-19，本机 = BRP Bridge v1.0.1 + AMO 扩展）**
+>
+> 桥与扩展都通（`status: available=true`，能读到活动标签 tabId=1、标题），
+> 但**结构化交互一律被拒**：
+>
+> ```
+> page.getInteractionTree → BRP_CAPABILITY_NOT_SUPPORTED
+> element.getAttribute     → BRP_CAPABILITY_NOT_SUPPORTED
+>   message: "Method not supported by negotiated capabilities: element.getAttribute"
+>   recoveryHint: "Check initialize response for supported actions"
+> ```
+>
+> **结论**：**当前可用的只有 `tab.*` + `page.screenshot`**（状态与截图都正常）。
+> 「AI 的手」（element.* / script.execute）与「AI 的结构化眼」（interactionTree）
+> 在这套扩展版本上**不可用** —— 这不是我们代码的问题（我们把能力声明补齐后仍被拒），
+> 而是**扩展侧没实现/没协商**这些 action。
+>
+> **这对画布方案的影响（重要）**：
+> · 「AI 用 BRP 点画布」这条路**现在走不通**，不要把画布设计压在它上面；
+> · 画布应当走**场景级 API**（画布自身暴露 getScene/apply 的受控通道）—— 不依赖 BRP，
+>   语义还更准（这正是 `canvas-plan.md` 里的"场景级（推荐）"那一档）；
+> · 截图（`page.screenshot`，可用）仍可作为"AI 看一眼"的辅助。
+>
+> **待办（需要产品决策）**：是否推动扩展实现 `element.*` / `script.execute` /
+> `page.getInteractionTree`。在扩展升级之前，本节的 UI 会如实显示
+> `capability-unsupported` 并提示"升级扩展"（已实现并有单测）。
 
 **验证**：BRP 客户端测试 **34 项全过**（新增 9 项，含 3 项安全关键：未知动作不得建会话、
 参数不合法不得发帧、BRP 错误码必须原样透传；以及 tree 的两种失败分级）。
