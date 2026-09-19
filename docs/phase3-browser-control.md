@@ -25,7 +25,22 @@
 **顺手修的**：`locales/zh-CN/.../kokoa.ftl` 里 `kokoa-cpa-category` **定义了两次**（重复 message id，
 Fluent 行为不可依赖）→ 删掉后一份。现在中英各 **81 键、零差集**。
 
-**验证状态**：语法/单测/check.sh 全过（桥回归 12 项、主线 36 套件全绿）。
+**验证状态（2026-09-19 已上产物）**：构建 **35428923317** 的产物上核实：
+
+| 核对项 | 结果 |
+|---|---|
+| `preferences.js` 里 `kokoaBrowserGroup` | ✅ 在（与 kokoaShellGroup 并列挂进 kokoa pane） |
+| pane 里 `KOKOA_BROWSER_GROUP` / `brpRegisterSettings` / `brpGuidance` | ✅ 都在 |
+| 中英文案 `kokoa-browser-*` | ✅ 21 条（含 3.2 的 6 条指引） |
+| 设置页三点分类渲染 | ✅ 截图非空白；Kokoa 分类 417 色 / 49.5% 非白（含新加的「浏览器控制」组） |
+
+（3.5 的 `tree` 相关键与 `brpSummarizeTree` 不在该产物里 —— 它们是更晚的提交，属预期。）
+
+> ★ 踩坑（已修）：验收脚本截图时若窗口没真到前台，系统会给整幅图蒙灰
+> （只有中性灰、颜色数骤降），**看起来像页面挂了**。已在截图前显式
+> `SetForegroundWindow` 并延长等待；读到"灰图"时先怀疑采集时机，别急着改 UI。
+
+**语法/单测/check.sh 全过**（桥回归 35 项、主线 36 套件全绿）。
 「组真的出现在设置页」需要**下一次构建**的产物（本地那个产品的 `preferences.js`
 来自 35420617352 的产物，那时还没有 `kokoaBrowserGroup`）—— 见构建 35428133433。
 
