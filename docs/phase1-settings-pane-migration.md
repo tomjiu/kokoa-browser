@@ -93,9 +93,11 @@
 5. 主线套件按新契约同步：`native-settings-composition` 改为「overlay 不得再碰
    preferences.js/xhtml」+「DIAG 探针仍可注入且幂等」，两条旧契约测试显式 skip。**36 套件全绿。**
 
-> ⚠️ 本地那个从 09-17 旧基础构建的产品目录（`.kokoa-product/manual-*`）仍然带着 overlay 注入
-> （因为它的基础里还是 fork 旧的 XUL 骨架）。要用新架构，跑
-> `.kokoa-product/stepb-35410121003/kokoa/kokoa.exe`，或让产品编排换成新的基础 zip。
+> ✅ **本地产物已切到新架构（2026-09-19）**：新建 `.kokoa-product/manual-stepb-20260919`
+> （新架构 `kokoa/` + 沿用 `dsh-home`/`profile`），启动器自动挑最新的那份，因此
+> `start-kokoa.cmd` 现在起的就是新架构。验证：产物判据 38/38、三个分类截图非空白
+> （291-327 色）、桥往返（写 `ui-theme.preference=dark` 再读回）通过。
+> 旧的 `.kokoa-product/manual-35173069555-191419` 仍在盘上作为回退。
 
 ## 5. 收口顺序（Step B，等本仓构建绿了再做）
 
