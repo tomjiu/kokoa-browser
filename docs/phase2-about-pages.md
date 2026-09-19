@@ -61,6 +61,28 @@ overlay** —— 页面资产（`home.html/css/js`、`sessions.html/css/js`）�
 | 2.4 | 文件树：优先 sidecar `/kokoa/fs/list` | home.js 已有文件树 UI（`fsPath`），只需确认在无 overlay 的裸浏览器里可用 |
 | 2.5 | 二级菜单显隐可配置（realtime #5） | `KokoaMenubar` 已有 MENU_ITEMS，缺 UI |
 
+## ★ 踩坑记录：about: 页面的注册时机（2026-09-19 实测）
+
+**症状**：产物里页面与模块**都在**（check-artifact 47/47 全过），但
+`kokoa.exe -profile <p> about:kokoa` 得到「Problem loading page」。
+
+**定位**：启动后在地址栏手输 `about:kokoa` → **能打开**（标题正常）。
+即：注册**是成功的**，只是**太晚** —— 命令行给的启动 URL 在**窗口脚本执行之前**
+就开始解析了（`zen-sets.js` 里那次是模块顶层，仍晚于首个标签的 URL 解析）。
+
+**处置**（两层，都保留）：
+1. `zen-sets.js` 模块顶层注册一次（窗口脚本最早时机）；
+2. `src/zen/common/modules/ZenStartup.mjs` 的 `init()` 里再注册一次（Zen 的启动模块，
+   早于标签加载），并整体 try/catch + console.error。
+
+**产品路径本来就不依赖它**：启动门面（`KokoaStartup`）是在**注册之后**才开
+`about:kokoa` 的 —— 所以「首屏是首页」不会踩到这个时序问题；两层注册是为了让
+「用户手输」「启动 URL 直接是 about:kokoa」也稳。
+
+**验收改法**：不要用 `about:kokoa` 当启动 URL（那是自找时序）；应
+① 启动到 `about:blank`，检查启动门面是否把首页开出来并选中；
+② 启动后再导航 `about:kokoa` / `about:kokoases` 看能否打开。
+
 ## 验收（Phase 2.1/2.3 的机器判据）
 
 1. `scripts/check-artifact.py <产物>/browser` → 6 条新 ★ 全 OK（**需下一次构建的产物**）。

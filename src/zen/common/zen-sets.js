@@ -12,6 +12,12 @@
 //   出来的浏览器里动态生效（与 boot.js 当年的理由一致）。
 // 【失败不致命】注册失败只意味着 about:kokoa 打不开，不该拖垮浏览器启动 ——
 //   整体 try/catch 并打 console.error 留痕。
+// 【★ 时机：必须在任何 about:kokoa 被请求之前】实测踩到：只在窗口监听器里注册时，
+//   用命令行直接开 about:kokoa 会先得到「Problem loading page」——首个标签的 URL
+//   解析早于 MozBeforeInitialXULLayout。所以本函数在**模块顶层**就调用一次
+//   （zen-sets.js 由 window 脚本加载，早于标签加载），监听器里再兜一次（幂等）。
+// 【诊断】把结果写进 pref kokoa.diag.aboutPages —— chrome console 不进 stderr，
+//   只有落盘才查得到（与构建期 DIAG 探针同一套路）。
 let gKokoaAboutPagesRegistered = false;
 function kokoaRegisterAboutPages() {
   if (gKokoaAboutPagesRegistered) {
@@ -19,17 +25,41 @@ function kokoaRegisterAboutPages() {
   }
   gKokoaAboutPagesRegistered = true;
   try {
+    // ★ 必须显式 { global: "current" } —— 否则模块不落在 window global，
+    //   顶层用 document/window 的模块会 ReferenceError，而 chrome console 不进
+    //   stderr，失败会被完全藏住（README 的踩坑记录）。实测：不加时 about:kokoa
+    //   直接「Problem loading page」。
     const { registerKokoaAboutPagesNow } = ChromeUtils.importESModule(
-      "resource:///modules/zen/KokoaAboutPages.mjs"
+      "resource:///modules/zen/KokoaAboutPages.mjs",
+      { global: "current" }
     );
     const r = registerKokoaAboutPagesNow();
+    kokoaDiagAboutPages("ok=" + r.ok + " " + r.log.join(" "));
     if (!r.ok) {
       console.error("[Kokoa] about 页面注册失败: " + r.log.join(" / "));
     }
   } catch (e) {
+    kokoaDiagAboutPages("THREW " + e);
     console.error("[Kokoa] about 页面注册抛错: " + e);
   }
 }
+
+/** 把 about 页面注册结果落盘（chrome console 不可见，这是唯一线索）。 */
+function kokoaDiagAboutPages(msg) {
+  try {
+    const { Services } = ChromeUtils.importESModule(
+      "resource://gre/modules/Services.sys.mjs",
+      { global: "current" }
+    );
+    Services.prefs.setStringPref("kokoa.diag.aboutPages", String(msg));
+    Services.prefs.savePrefFile(null);
+  } catch (e) {
+    /* 诊断本身失败就算了 */
+  }
+}
+
+// ★ 立刻注册一次（模块顶层 = 标签加载之前）。失败也只记诊断，不抛。
+kokoaRegisterAboutPages();
 
 // Kokoa 启动门面（Phase 2.2）：首屏 = about:kokoa 首页（可用 pref 关掉）。
 // 【顺序】必须先注册 about 协议再开门面 —— 否则 about:kokoa 开不出来。
@@ -45,7 +75,8 @@ function kokoaApplyStartupFacade() {
   gKokoaStartupFacadeDone = true;
   try {
     const { ensureHomeFirst, realDeps } = ChromeUtils.importESModule(
-      "resource:///modules/zen/KokoaStartup.mjs"
+      "resource:///modules/zen/KokoaStartup.mjs",
+      { global: "current" }
     );
     const r = ensureHomeFirst(window, realDeps());
     if (!r.ok) {

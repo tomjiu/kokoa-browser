@@ -73,6 +73,26 @@ class ZenStartup {
           // 不致命：联动失败不该影响浏览器启动
           console.error("[Kokoa] 初始化工作区会话联动失败: " + e);
         }
+
+        // 【Kokoa 2026-09-19】内建 about: 页面（about:kokoa / about:kokoases）。
+        //
+        // 【为什么这里再注册一次】about 协议是进程级且幂等，早注册只有好处：
+        //   zen-sets.js 那次在**窗口脚本加载**时才跑，实测「命令行直接把
+        //   about:kokoa 当启动 URL」会失败 —— 首个标签的 URL 解析早于窗口脚本。
+        //   产品路径其实不依赖它（启动门面 KokoaStartup 是注册之后才开首页的），
+        //   这里补一次是为了让「用户手输 about:kokoa」「启动 URL 就是它」也稳。
+        //   说明与验收见 docs/phase2-about-pages.md。
+        try {
+          const { registerKokoaAboutPagesNow } = ChromeUtils.importESModule(
+            "resource:///modules/zen/KokoaAboutPages.mjs"
+          );
+          const r = registerKokoaAboutPagesNow();
+          if (!r.ok) {
+            console.error("[Kokoa] about 页面注册失败: " + r.log.join(" / "));
+          }
+        } catch (e) {
+          console.error("[Kokoa] about 页面注册抛错: " + e);
+        }
       });
     } catch (e) {
       console.error("ZenThemeModifier: Error initializing browser layout", e);
