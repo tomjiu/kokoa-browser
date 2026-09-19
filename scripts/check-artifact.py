@@ -251,6 +251,27 @@ for rel in (
     chk('★ Kokoa 内建页面进包: ' + rel.split('/')[-1], rel in names,
         '缺 ' + rel + '（检查 jar.inc.mn 的 content/browser/kokoa/ 条目）')
 
+# ── Kokoa 画布（人 + AI 协作白板，about:canvas）──────────────────────────
+# 决策：画布是"普通网页"，AI 走**场景级 API**（不依赖 BRP —— 实测扩展不支持 element.*）。
+# 详见 docs/canvas-plan.md。
+for rel in (
+    'chrome/browser/content/browser/kokoa/canvas/canvas.html',
+    'chrome/browser/content/browser/kokoa/canvas/canvas.js',
+    'chrome/browser/content/browser/kokoa/canvas/canvas.css',
+):
+    chk('★ 画布资产进包: ' + rel.split('/')[-1], rel in names,
+        '缺 ' + rel + '（检查 jar.inc.mn 的 content/browser/kokoa/canvas/ 条目）')
+
+canvas_js = [n for n in names if n.endswith('content/browser/kokoa/canvas/canvas.js')]
+if canvas_js:
+    t = z.read(canvas_js[0]).decode('utf-8', 'replace')
+    chk('★ 画布自述状态接口存在（__kokoaCanvasState，外壳/测试读取点）',
+        '__kokoaCanvasState' in t,
+        '缺 __kokoaCanvasState —— 页面应能被程序自述状态，而不是只能靠截图判断')
+    chk('★ 画布模式词汇与产品一致（user/collaborative/ai）',
+        all(k in t for k in ('"user"', '"collaborative"', '"ai"')),
+        'three-mode vocabulary missing')
+
 page_mod = [n for n in names if n.endswith('modules/zen/KokoaAboutPages.mjs')]
 chk('★ about 页面注册模块进包（KokoaAboutPages.mjs）', page_mod,
     page_mod[0] if page_mod else '缺 modules/zen/KokoaAboutPages.mjs（检查 moz.build）')

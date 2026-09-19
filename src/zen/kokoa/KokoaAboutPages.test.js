@@ -80,16 +80,24 @@ function deps() {
 
 // ═══ 1. 页面契约 ════════════════════════════════════════════════════════
 console.log("=== 页面契约 ===");
-eq("两个页面", KOKOA_PAGES.map((p) => p.name), ["kokoa", "kokoases"]);
+eq("注册的页面（顺序即注册顺序）", KOKOA_PAGES.map((p) => p.name), [
+  "kokoa",
+  "kokoases",
+  "canvas",
+]);
 for (const p of KOKOA_PAGES) {
-  ok("  " + p.name + " 的 URI 是本仓打包路径",
-     p.uri.startsWith("chrome://browser/content/kokoa/") &&
-     (p.uri.endsWith("home.html") || p.uri.endsWith("sessions.html")), p.uri);
+  // URI 必须落在本仓打包路径下，且是 .html（about: 协议指向文档）。
+  // 不枚举具体文件名 —— 加页面时不该再改这里（canvas 就是新增的第 3 个）。
+  ok("  " + p.name + " 的 URI 是本仓打包路径 + html",
+     p.uri.startsWith("chrome://browser/content/kokoa/") && p.uri.endsWith(".html"), p.uri);
   ok("  " + p.name + " 的 contract 正确", contractFor(p.name).endsWith("what=" + p.name));
   ok("  " + p.name + " 的 CID 是合法 GUID 形态",
      /^\{[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\}$/.test(p.cid), p.cid);
 }
-ok("两个页面 CID 不重复", KOKOA_PAGES[0].cid !== KOKOA_PAGES[1].cid);
+ok(
+  "CID 互不重复",
+  new Set(KOKOA_PAGES.map((p) => p.cid)).size === KOKOA_PAGES.length
+);
 
 // ═══ 2. 注册：三件事都做 ════════════════════════════════════════════════
 console.log("=== 注册 ===");
@@ -105,7 +113,11 @@ console.log("=== 注册 ===");
        d.calls.some((c) => c[0] === "addCategoryEntry" && c[1] === "about" && c[2] === p.name && c[3] === contract),
        JSON.stringify(d.calls.filter((c) => c[0] === "addCategoryEntry")));
   }
-  eq("registerFactory 次数 = 2", d.calls.filter((c) => c[0] === "registerFactory").length, 2);
+  eq(
+    "registerFactory 次数 = 页面数",
+    d.calls.filter((c) => c[0] === "registerFactory").length,
+    KOKOA_PAGES.length
+  );
 }
 
 // ═══ 3. 幂等：重复注册不重复注册 factory ═════════════════════════════════
@@ -116,12 +128,12 @@ console.log("=== 幂等 ===");
   const first = d.calls.filter((c) => c[0] === "registerFactory").length;
   const r2 = registerKokoaAboutPages(d);
   const second = d.calls.filter((c) => c[0] === "registerFactory").length;
-  eq("第一次注册 2 个", first, 2);
-  eq("第二次不再注册（already）", second, 2);
+  eq("第一次注册 = 页面数", first, KOKOA_PAGES.length);
+  eq("第二次不再注册（already）", second, KOKOA_PAGES.length);
   ok("第二次日志含 already", r2.log.every((l) => l.includes("already")), JSON.stringify(r2.log));
   // 但类别条目仍应确保存在（浏览器重启后类别表可能被清）
-  eq("第二次仍补类别条目",
-     d.calls.filter((c) => c[0] === "addCategoryEntry").length, 4);
+  eq("第二次仍补类别条目（= 2 × 页面数）",
+     d.calls.filter((c) => c[0] === "addCategoryEntry").length, KOKOA_PAGES.length * 2);
 }
 
 // ═══ 4. 模块实现 ════════════════════════════════════════════════════════

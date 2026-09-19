@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<!-- Kokoa 画布（人 + AI 协作白板）—— Phase 4/画布 第 1 步：先"能打开"。
+     ★ 这是 about: 文档，两条硬约束（Phase 2 已踩过，别忘）：
+       1) 默认 CSP 禁内联脚本 → 脚本必须走 chrome: 绝对路径；
+       2) 相对 URL 不解析 → href/src 都要写全 chrome://browser/content/kokoa/canvas/...。
+     库（Excalidraw）在第 2 步才接；本页先用最小 DOM 证明"协议注册 + 打包 + 能开"。 -->
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Kokoa 画布</title>
+    <link rel="stylesheet" href="chrome://browser/content/kokoa/canvas/canvas.css" />
+  </head>
+  <body>
+    <header id="bar">
+      <span id="title">Kokoa 画布</span>
+      <span id="mode" data-agent-mode="user">人单独编辑</span>
+      <span id="hint">第 1 步：占位画布区（Excalidraw 在第 2 步接入）</span>
+    </header>
+    <main id="stage">
+      <div id="placeholder">
+        <p>画布占位</p>
+        <p class="dim">这里将放 Excalidraw 场景。AI 会通过<b>场景级 API</b>（不是 BRP）读写它。</p>
+      </div>
+    </main>
+    <footer id="status">就绪</footer>
+    <script src="chrome://browser/content/kokoa/canvas/canvas.js"></script>
+  </body>
+</html>

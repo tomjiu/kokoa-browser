@@ -20,3 +20,11 @@
         content/browser/kokoa/sessions.html                              (../../zen/kokoa/pages/sessions.html)
         content/browser/kokoa/sessions.css                               (../../zen/kokoa/pages/sessions.css)
         content/browser/kokoa/sessions.js                                (../../zen/kokoa/pages/sessions.js)
+
+# ── Kokoa 画布（人 + AI 协作白板）────────────────────────────────────────
+# ★ 2026-09-19：画布走"普通网页"路线（about:canvas），AI 通过**场景级 API** 读写场景
+#   —— **不依赖 BRP**（实测扩展只支持 tab.* + page.screenshot，element.*/script.execute
+#   全被回 BRP_CAPABILITY_NOT_SUPPORTED）。决策与落地顺序见 docs/canvas-plan.md。
+        content/browser/kokoa/canvas/canvas.html                          (../../zen/kokoa/pages/canvas.html)
+        content/browser/kokoa/canvas/canvas.css                           (../../zen/kokoa/pages/canvas.css)
+        content/browser/kokoa/canvas/canvas.js                            (../../zen/kokoa/pages/canvas.js)

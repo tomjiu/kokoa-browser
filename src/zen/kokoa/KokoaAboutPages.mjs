@@ -44,6 +44,15 @@ export const KOKOA_PAGES = [
     uri: "chrome://browser/content/kokoa/sessions.html",
     description: "about:kokoases",
   },
+  {
+    // 画布（人 + AI 协作白板）。决策见 docs/canvas-plan.md：
+    // 它是**普通 about 页**；AI 走**场景级 API** 而不是 BRP
+    // （实测扩展只支持 tab.* + page.screenshot，element.* 会被拒）。
+    name: "canvas",
+    cid: "{c4d5e6f7-1a2b-4c3d-9e8f-0a1b2c3d4e5f}",
+    uri: "chrome://browser/content/kokoa/canvas/canvas.html",
+    description: "about:canvas",
+  },
 ];
 
 /** contractID：about 协议按 what=<name> 派发。 */
