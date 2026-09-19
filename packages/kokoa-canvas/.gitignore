@@ -1,1 +1,15 @@
+# 【为什么 dist/ 不入库（与 dsh 插件包的约定**相反**，是有意的）】
+#
+# dsh 插件把 lib/client.js 提交入库，因为它们的产物是 KB 级、且 bootstrap 承诺零工具链。
+# 本包不同：实测完整产物 **8.4MB**（Excalidraw 打包），而 fork 的 omni.ja 才约 97MB。
+# 把 8.4MB 提交进 git 会让每次 clone / 每次 diff 都背上它，而且它**不进 omni.ja**。
+#
+# 所以本包产物走「构建时产出、不进版本库」：
+#   · 需要时：bash build.sh（产出 dist/canvas.js + dist/pure.mjs）
+#   · about:canvas 懒加载它（见 docs/canvas-step2-excalidraw.md 与本包 README）
+#
+# 注意：纯逻辑小包 dist/pure.mjs（2.3KB）是**单测输入**，也不入库 ——
+#   测试前先跑一次 build.sh（CI 里同样先 build 再跑测试）。
 node_modules/
+dist/
+pure-entry.ts
