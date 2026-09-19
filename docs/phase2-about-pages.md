@@ -89,6 +89,8 @@ overlay** —— 页面资产（`home.html/css/js`、`sessions.html/css/js`）�
 |---|---|
 | 启动 URL = `about:blank` + 启动门面 | ✅ **首页被开出来并选中**（窗口标题 Kokoa Browser；截图量化 304 色 / 19.9% 非白，非空白页） |
 | 启动后导航 `about:kokoa` | ✅ 打开（标题正常） |
+| 启动后导航 `about:kokoases` | ✅ 打开（截图量化 410 色 / 44.6% 非白 = 有内容的页面，不是错误页） |
+| 设置页三个分类 | ✅ 截图非空白（292-323 色 / 27-30% 非白） |
 | 启动 URL 直接 = `about:kokoa` | ⚠️ **仍「Problem loading page」**（见下） |
 
 **关于第三行（诚实记录）**：把 `about:kokoa` 当**命令行启动 URL** 时仍打不开 ——
