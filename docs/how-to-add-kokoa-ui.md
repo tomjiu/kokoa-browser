@@ -324,13 +324,21 @@ register_module("paneZenMarketplace", gZenMarketplaceManager);
 - 文案：`locales\<lang>\browser\browser\preferences\zen-preferences.ftl`，
   并在 `main-js.patch` L31 把 `browser/preferences/zen-preferences.ftl` 加进 Localization 列表。
 
-**Kokoa 加设置分类的最小改动集（我认为）：**
+**Kokoa 加设置分类的最小改动集：**
 
-1. 新建 `src\browser\components\preferences\kokoaFoo.inc.xhtml`（模板 id = `template-paneKokoaFoo`）。
-2. 改 `preferences-xhtml.patch`：加 nav button + `#include`（重新 `surfer export`）。
-3. 改 `preferences-js.patch`：`register_module("paneKokoaFoo", gKokoaFoo)`。
-4. 写 `zen-settings.js` 同级的逻辑（或直接写进 `zen-settings.js` / 另建 `kokoa-settings.js` + jar.mn）。
-5. l10n：`zen-preferences.ftl` 加 key，或新建 ftl 并挂进 `zen-preferences-links.xhtml`。
+> ⚠️ **2026-09-19 起改用 config pane 体系**（下面第 1-4 步是旧 XUL 模板路线的记录，
+> 只对「还要写 XUL 的自定义控件」有意义）。Kokoa 现有三个分类是**照着 Firefox 自己的
+> `preferences/config/*.mjs` 体系**做的，加新分类请照抄这条路：
+> `src/browser/components/preferences/config/<name>.mjs`（`SettingGroupManager` + `SettingPaneManager`）。
+
+1. （旧路线）新建 `src\browser\components\preferences\kokoaFoo.inc.xhtml`（模板 id = `template-paneKokoaFoo`）。
+2. 改 `preferences-xhtml.patch`：加 nav button +（新体系**不需要** `#include`，pane 由 JS 注册）。
+3. 改 `preferences-js.patch`：`SettingPaneManager.registerPane("kokoaFoo", {...})`（旧写法是
+   `register_module("paneKokoaFoo", gKokoaFoo)`）。
+4. 写逻辑模块：**新体系** = `preferences/config/kokoaFoo.mjs`（登记进 `jar-mn.patch`，
+   注意子目录必须写显式源路径 `(config/kokoaFoo.mjs)`）；旧体系才是 `kokoa-settings.js`。
+5. l10n：新建 `locales/<locale>/browser/browser/preferences/kokoa.ftl` 并挂进
+   `zen-preferences-links.xhtml`（`zen-preferences.ftl` 只放 Zen 自己的键）。
 
 ---
 

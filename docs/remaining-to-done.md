@@ -12,7 +12,7 @@
 |---|---|
 | 品牌名 = Kokoa | 产物 brand.ftl：41 locale，kokoa=205 / zen=0；aboutDialog.xhtml zen=0 |
 | 6 个 AI 模块进包 | 产物 `modules/zen/Kokoa*.mjs`（35173069555 含 KokoaMenubar / KokoaDshSessions） |
-| 设置页 Kokoa 分类 | 产物 41 个 ftl + kokoa-settings.js；面板空白根因已修（`data-category`） |
+| 设置页 Kokoa 分类 | **2026-09-19 换形态**：三个阶段 2「设置页所有权迁移」—— 三个分类（Kokoa / Kokoa dsh / Kokoa CPA）改由**本仓 config pane 体系**提供（`preferences/config/kokoa.mjs` + `SettingPaneManager.registerPane`），旧 XUL 骨架 `kokoa-settings.js`/`kokoaSettings.inc.xhtml` **已退役**；产物判据见 `scripts/check-artifact.py` 第 7 节（导航项 + kokoa.ftl 链接 + 旧骨架必须不存在 + 模块与两 locale 文案进包） |
 | AI 面板 / 分屏 / 会话绑定 | 源码已实现；设置页两按钮走同一路径 |
 | 菜单可配置（默认隐藏 3 项） | 产物 5 条 `kokoa.menu.*` pref；实机验收已过（b0962e7） |
 | 欢迎页 / 新标签 logo | `zen.welcome-screen.seen=true`；`activity-stream.hideLogo=true` |

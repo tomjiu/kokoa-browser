@@ -1,5 +1,11 @@
 # 工作项：Kokoa 设置页（TASK-06 落地）
 
+> 🗄️ **本文是历史工作项（XUL 模板路线）**：文中 `kokoa-settings.js` / `kokoaSettings.inc.xhtml` /
+> `register_module("paneKokoa", gKokoaSettings)` 这套做法**已于 2026-09-19 退役** ——
+> 设置页改为 Firefox 自己的 config pane 体系，且所有权从主线 overlay 迁回本仓。
+> 现行做法见 `phase1-settings-pane-migration.md` 与 `src/browser/components/preferences/config/kokoa.mjs`。
+> 本文保留是为了记录当时的坑（jar.mn 源路径、data-category、l10n 形态等，多数仍然成立）。
+
 > 依据：TASK-06（312 行，验收方已核验 4/4 命中 + 1 个真陷阱）
 > 目的：把「调研结论」变成「照做即可的步骤」。
 
